@@ -58,7 +58,7 @@ export class AuthService {
   async authenticateSteam(apiKey: string): Promise<AuthState> {
     try {
       // Validate API key by making a test request
-      const response = await apiFetch(`api/steam/profile?apiKey=${apiKey}`)
+      const response = await apiFetch(`steam/profile?apiKey=${apiKey}`)
       
       if (!response.ok) {
         throw new Error('Invalid Steam API key')
@@ -110,7 +110,7 @@ export class AuthService {
       }
 
       // Validate token by fetching user info
-      const response = await apiFetch('api/discord/user', {
+      const response = await apiFetch('discord/user', {
         method: 'POST',
         body: JSON.stringify({ botToken }),
       });
@@ -159,7 +159,7 @@ export class AuthService {
   async authenticateYouTube(apiKey: string): Promise<AuthState> {
     try {
       // Validate API key by making a test request
-      const response = await apiFetch(`api/youtube/test?apiKey=${apiKey}`)
+      const response = await apiFetch(`youtube/test?apiKey=${apiKey}`)
       
       if (!response.ok) {
         throw new Error('Invalid YouTube API key')

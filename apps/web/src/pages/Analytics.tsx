@@ -190,7 +190,7 @@ export const Analytics: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await apiFetch('api/analytics/summary');
+        const response = await apiFetch('analytics/summary');
         if (response.ok) {
           const result = await response.json();
           if (result.success) setRealStats(result.data);
@@ -208,7 +208,7 @@ export const Analytics: React.FC = () => {
   useEffect(() => {
     const loadInsights = async () => {
       try {
-        const response = await apiFetch('api/analytics/events?limit=100');
+        const response = await apiFetch('analytics/events?limit=100');
         if (response.ok) {
           const result = await response.json();
           if (result.success) {

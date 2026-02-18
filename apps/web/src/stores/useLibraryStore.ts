@@ -66,7 +66,7 @@ const importSteamLibrary = async (steamId: string, apiKey: string, forceReimport
       console.log('🔍 useLibraryStore: About to call apiFetch with gamesForUpsert length:', gamesForUpsert.length)
       console.log('🔍 useLibraryStore: First game sample:', JSON.stringify(gamesForUpsert[0], null, 2))
       
-      const upsertResponse = await apiFetch('api/launcher/upsert-games', {
+      const upsertResponse = await apiFetch('launcher/upsert-games', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

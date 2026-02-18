@@ -28,7 +28,7 @@ export class SteamAPI {
   static async getOwnedGames(steamId: string, apiKey: string): Promise<SteamApiGame[]> {
     try {
       // Use new v2 endpoint with apiFetch - include /api prefix
-      const url = `api/steam/games/v2?steamId=${encodeURIComponent(steamId)}&apiKey=${encodeURIComponent(apiKey)}`
+      const url = `steam/games/v2?steamId=${encodeURIComponent(steamId)}&apiKey=${encodeURIComponent(apiKey)}`
       console.log('🔍 SteamAPI: Fetching from URL:', url)
       
       const response = await apiFetch(url)

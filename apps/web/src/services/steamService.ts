@@ -168,7 +168,7 @@ export class SteamService {
         console.log('🔍 Using backend Steam proxy:', { steamId })
         
         const { apiFetch } = await import('../config/api')
-        const response = await apiFetch(`api/steam/games/v2?steamId=${encodeURIComponent(steamId)}&apiKey=${encodeURIComponent(apiKey)}`)
+        const response = await apiFetch(`steam/games/v2?steamId=${encodeURIComponent(steamId)}&apiKey=${encodeURIComponent(apiKey)}`)
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
@@ -357,7 +357,7 @@ export class SteamService {
   static async importSteamLibrary(steamId: string, _apiKey: string): Promise<Omit<Game, 'id'>[]> {
     try {
       // Use backend library endpoint through Vite proxy
-      const response = await apiFetch(`api/steam/library/${encodeURIComponent(steamId)}`)
+      const response = await apiFetch(`steam/library/${encodeURIComponent(steamId)}`)
       
       if (!response.ok) {
         throw new Error(`Backend API error: ${response.status}`)

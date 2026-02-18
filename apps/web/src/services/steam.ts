@@ -32,7 +32,7 @@ export interface FeaturedGame {
 }
 
 export async function getSteamProfile(): Promise<SteamProfile> {
-  const response = await apiFetch('api/steam/profile')
+  const response = await apiFetch('steam/profile')
   
   if (!response.ok) {
     throw new Error(`Failed to fetch Steam profile: ${response.status} ${response.statusText}`)
@@ -42,7 +42,7 @@ export async function getSteamProfile(): Promise<SteamProfile> {
 }
 
 export async function getSteamLibrary(steamId: string): Promise<SteamLibrary> {
-  const response = await apiFetch(`api/steam/library/${steamId}`)
+  const response = await apiFetch(`steam/library/${steamId}`)
   
   if (!response.ok) {
     throw new Error(`Failed to fetch Steam library: ${response.status} ${response.statusText}`)
@@ -52,7 +52,7 @@ export async function getSteamLibrary(steamId: string): Promise<SteamLibrary> {
 }
 
 export async function getFeaturedGames(): Promise<FeaturedGame[]> {
-  const response = await apiFetch('api/steam/featured')
+  const response = await apiFetch('steam/featured')
   
   if (!response.ok) {
     throw new Error(`Failed to fetch featured games: ${response.status} ${response.statusText}`)

@@ -120,7 +120,7 @@ class PersonaEngineService {
         }
       }
 
-      await apiFetch('api/persona/session/start', {
+      await apiFetch('persona/session/start', {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(sessionData)
@@ -145,7 +145,7 @@ class PersonaEngineService {
         timestamp: new Date().toISOString()
       }
 
-      await apiFetch('api/persona/metrics/update', {
+      await apiFetch('persona/metrics/update', {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(metricsData)
@@ -180,7 +180,7 @@ class PersonaEngineService {
   // Get comprehensive persona metrics
   async getPersonaMetrics(): Promise<PersonaMetrics> {
     try {
-      const response = await apiFetch('api/persona/metrics', {
+      const response = await apiFetch('persona/metrics', {
         method: 'GET',
         headers: this.getAuthHeaders()
       })
@@ -200,7 +200,7 @@ class PersonaEngineService {
   // Get personalized game recommendations based on persona
   async getPersonaRecommendations(limit = 10): Promise<Game[]> {
     try {
-      const response = await apiFetch(`api/persona/recommendations?limit=${limit}`, {
+      const response = await apiFetch(`persona/recommendations?limit=${limit}`, {
         method: 'GET',
         headers: this.getAuthHeaders()
       })
@@ -220,7 +220,7 @@ class PersonaEngineService {
   // Get mood-based game suggestions
   async getMoodBasedSuggestions(mood: string, limit = 5): Promise<Game[]> {
     try {
-      const response = await apiFetch(`api/persona/mood-suggestions?mood=${mood}&limit=${limit}`, {
+      const response = await apiFetch(`persona/mood-suggestions?mood=${mood}&limit=${limit}`, {
         method: 'GET',
         headers: this.getAuthHeaders()
       })
@@ -244,7 +244,7 @@ class PersonaEngineService {
     insights: Array<{ type: string; message: string; priority: 'low' | 'medium' | 'high' }>
   }> {
     try {
-      const response = await apiFetch('api/persona/pattern-analysis', {
+      const response = await apiFetch('persona/pattern-analysis', {
         method: 'GET',
         headers: this.getAuthHeaders()
       })
@@ -331,7 +331,7 @@ class PersonaEngineService {
     try {
       console.log('🎭 Initializing persona for new user:', userId)
       
-      const response = await apiFetch('api/persona/initialize', {
+      const response = await apiFetch('persona/initialize', {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({ userId })
@@ -360,7 +360,7 @@ class PersonaEngineService {
       console.log('🎭 Loading persona for user:', userId)
       
       // Use cookie-based auth like other working endpoints - no JWT token for persona
-      const response = await apiFetch(`api/persona`, {
+      const response = await apiFetch(`persona`, {
         method: 'GET',
         credentials: 'include'
       })
@@ -394,7 +394,7 @@ class PersonaEngineService {
       
       // Optionally call backend to reset session
       try {
-        await apiFetch('api/persona/reset', {
+        await apiFetch('persona/reset', {
           method: 'POST',
           headers: this.getAuthHeaders()
         })

@@ -53,7 +53,7 @@ class LauncherService {
   async launchGame(gameId: string, platformCode?: string): Promise<LaunchResponse> {
     try {
       // Try backend launcher first
-      const response = await apiFetch('api/launcher/launch', {
+      const response = await apiFetch('launcher/launch', {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({ gameId, platformCode })
@@ -196,7 +196,7 @@ class LauncherService {
 
   async endSession(sessionId?: string, gameId?: string): Promise<SessionEndResponse> {
     try {
-      const response = await apiFetch('api/launcher/session/end', {
+      const response = await apiFetch('launcher/session/end', {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({ sessionId, gameId })
@@ -236,7 +236,7 @@ class LauncherService {
 
   async getActiveSessions(): Promise<any> {
     try {
-      const response = await apiFetch('api/launcher/session/active', {
+      const response = await apiFetch('launcher/session/active', {
         method: 'GET',
         headers: this.getAuthHeaders()
       })
@@ -260,7 +260,7 @@ class LauncherService {
       const params = new URLSearchParams({ limit: limit.toString() })
       if (gameId) params.append('gameId', gameId)
 
-      const response = await apiFetch(`api/launcher/session/history?${params}`, {
+      const response = await apiFetch(`launcher/session/history?${params}`, {
         method: 'GET',
         headers: this.getAuthHeaders()
       })
