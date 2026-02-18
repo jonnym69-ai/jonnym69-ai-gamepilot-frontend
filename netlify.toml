@@ -1,0 +1,18 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  VITE_API_URL = "https://gamepilot-api.onrender.com"
+  VITE_API_BASE_URL = "https://gamepilot-api.onrender.com/api"
+  VITE_STEAM_API_KEY = "FBB124C9352519E8F9FE820ADF0DA87C"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self' https://gamepilot-api.onrender.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; connect-src 'self' https://gamepilot-api.onrender.com https://api.steampowered.com; frame-ancestors 'self';"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

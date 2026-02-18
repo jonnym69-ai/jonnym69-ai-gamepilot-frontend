@@ -1,0 +1,5 @@
+export { ScreenshotCarousel } from './ScreenshotCarousel'
+export { TrailerPlayer } from './TrailerPlayer'
+export { InfoSection } from './InfoSection'
+export { TagsList } from './TagsList'
+export { PriceBadge } from './PriceBadge'

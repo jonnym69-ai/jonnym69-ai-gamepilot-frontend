@@ -1,0 +1,412 @@
+/* Customisation System Styles */
+
+/* Base customisation provider */
+.customisation-provider {
+  min-height: 100vh;
+  transition: background 0.4s ease, background-color 0.4s ease;
+  position: relative;
+}
+
+/* Background overlay for image mode */
+.customisation-provider::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-overlay, transparent);
+  pointer-events: none;
+  z-index: 1;
+  transition: background 0.4s ease;
+}
+
+/* Enhanced image background overlay */
+.customisation-provider[data-background-mode="image"]::before {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
+}
+
+/* Animation Levels */
+.animations-low * {
+  animation-duration: 0.1s !important;
+  transition-duration: 0.1s !important;
+}
+
+.animations-low .animate-pulse {
+  animation: none !important;
+}
+
+.animations-low .animate-bounce {
+  animation: none !important;
+}
+
+.animations-low .animate-spin {
+  animation: spin 1s linear infinite !important;
+}
+
+.animations-medium * {
+  animation-duration: 0.3s !important;
+  transition-duration: 0.2s !important;
+}
+
+.animations-high * {
+  animation-duration: 0.5s !important;
+  transition-duration: 0.3s !important;
+}
+
+/* Enhanced Density Settings */
+.density-compact .container {
+  padding: 0.875rem;
+}
+
+.density-compact .glass-morphism {
+  padding: 0.625rem;
+}
+
+.density-compact .text-2xl {
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+}
+
+.density-compact .text-xl {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+}
+
+.density-compact .text-lg {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.density-compact .gap-6 {
+  gap: 0.875rem;
+}
+
+.density-compact .gap-4 {
+  gap: 0.625rem;
+}
+
+.density-compact .gap-8 {
+  gap: 1.25rem;
+}
+
+.density-compact .mb-6 {
+  margin-bottom: 0.875rem;
+}
+
+.density-compact .mb-8 {
+  margin-bottom: 1.375rem;
+}
+
+.density-compact .mb-10 {
+  margin-bottom: 1.75rem;
+}
+
+.density-compact .p-6 {
+  padding: 0.625rem;
+}
+
+.density-compact .p-4 {
+  padding: 0.5rem;
+}
+
+.density-compact .p-8 {
+  padding: 0.875rem;
+}
+
+.density-compact .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-bottom: 0.875rem;
+}
+
+.density-compact .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-bottom: 0.625rem;
+}
+
+.density-compact .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  margin-bottom: 1.25rem;
+}
+
+.density-comfortable .container {
+  padding: 1.625rem;
+}
+
+.density-comfortable .glass-morphism {
+  padding: 1.625rem;
+}
+
+.density-comfortable .gap-6 {
+  gap: 1.625rem;
+}
+
+.density-comfortable .gap-4 {
+  gap: 1.125rem;
+}
+
+.density-comfortable .gap-8 {
+  gap: 2.125rem;
+}
+
+.density-comfortable .mb-6 {
+  margin-bottom: 1.625rem;
+}
+
+.density-comfortable .mb-8 {
+  margin-bottom: 2.125rem;
+}
+
+.density-comfortable .mb-10 {
+  margin-bottom: 2.625rem;
+}
+
+.density-comfortable .p-6 {
+  padding: 1.625rem;
+}
+
+.density-comfortable .p-4 {
+  padding: 1.125rem;
+}
+
+.density-comfortable .p-8 {
+  padding: 2.125rem;
+}
+
+.density-comfortable .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-bottom: 1.625rem;
+}
+
+.density-comfortable .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-bottom: 1.125rem;
+}
+
+.density-comfortable .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+  margin-bottom: 2.125rem;
+}
+
+/* Accent Color Variables */
+:root {
+  --accent-color: #3b82f6;
+  --accent-color-hover: #3b82f6dd;
+  --accent-color-light: #3b82f633;
+  --accent-color-lighter: #3b82f61a;
+  --accent-color-ultralight: #3b82f60d;
+  --accent-gradient: linear-gradient(135deg, #3b82f6, #3b82f6dd);
+  --accent-glow: 0 0 20px #3b82f633;
+  --accent-glow-strong: 0 0 40px #3b82f666;
+  --bg-overlay: transparent;
+}
+
+/* Apply accent color to key elements */
+.customisation-provider .bg-gaming-primary {
+  background-color: var(--accent-color) !important;
+}
+
+.customisation-provider .border-gaming-primary {
+  border-color: var(--accent-color) !important;
+}
+
+.customisation-provider .text-gaming-primary {
+  color: var(--accent-color) !important;
+}
+
+.customisation-provider .hover\:bg-gaming-primary:hover {
+  background-color: var(--accent-color-hover) !important;
+}
+
+.customisation-provider .hover\:border-gaming-primary:hover {
+  border-color: var(--accent-color-hover) !important;
+}
+
+.customisation-provider .hover\:text-gaming-primary:hover {
+  color: var(--accent-color-hover) !important;
+}
+
+.customisation-provider .shadow-gaming-primary {
+  box-shadow: var(--accent-glow) !important;
+}
+
+.customisation-provider .shadow-lg.shadow-gaming-primary {
+  box-shadow: var(--accent-glow-strong) !important;
+}
+
+/* Enhanced accent applications */
+.customisation-provider .ring-gaming-primary {
+  --tw-ring-color: var(--accent-color) !important;
+  --tw-ring-offset-color: var(--accent-color-ultralight) !important;
+}
+
+/* Button enhancements */
+.customisation-provider button:focus {
+  outline-color: var(--accent-color-light);
+  outline-offset: 2px;
+  transition: all 0.2s ease;
+}
+
+.customisation-provider button:hover {
+  box-shadow: 0 0 12px var(--accent-color) !important;
+  transition: all 0.2s ease;
+}
+
+/* Input enhancements */
+.customisation-provider input:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 3px var(--accent-color-light) !important;
+  transition: all 0.2s ease;
+}
+
+.customisation-provider select:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 3px var(--accent-color-light) !important;
+  transition: all 0.2s ease;
+}
+
+/* Link enhancements */
+.customisation-provider a:focus {
+  outline-color: var(--accent-color);
+  transition: all 0.2s ease;
+}
+
+/* Card hover enhancements */
+.customisation-provider .glass-morphism:hover {
+  box-shadow: 0 0 20px var(--accent-color-light) !important;
+  transition: all 0.2s ease;
+}
+
+/* Active tab indicators */
+.customisation-provider [aria-selected="true"] {
+  background-color: var(--accent-color-light) !important;
+  border-color: var(--accent-color) !important;
+}
+
+/* Slider and toggle enhancements */
+.customisation-provider input[type="range"]::-webkit-slider-thumb {
+  background-color: var(--accent-color) !important;
+}
+
+.customisation-provider input[type="checkbox"]:checked {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+}
+
+/* Enhanced Lighting Modes (visual indicators only) */
+.lighting-mood::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, transparent 0%, var(--accent-color-ultralight) 30%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+  animation: moodPulse 6s ease-in-out infinite;
+}
+
+.lighting-rgb-sync::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(34, 197, 94, 0.05) 50%, rgba(239, 68, 68, 0.05) 100%);
+  pointer-events: none;
+  z-index: 1;
+  animation: rgbPulse 4s ease-in-out infinite;
+}
+
+@keyframes moodPulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.02); }
+}
+
+@keyframes rgbPulse {
+  0%, 100% { opacity: 0.08; }
+  25% { opacity: 0.15; }
+  50% { opacity: 0.12; }
+  75% { opacity: 0.2; }
+}
+
+/* Responsive adjustments for customisation */
+@media (max-width: 768px) {
+  .density-compact .container {
+    padding: 0.5rem;
+  }
+  
+  .density-comfortable .container {
+    padding: 1rem;
+  }
+}
+
+/* Smooth transitions for customisation changes */
+.customisation-provider * {
+  transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+}
+
+/* Enhanced animation transitions */
+.animations-low * {
+  animation-duration: 0.1s !important;
+  transition-duration: 0.1s !important;
+  transition-timing-function: linear !important;
+}
+
+.animations-low .animate-pulse {
+  animation: none !important;
+}
+
+.animations-low .animate-bounce {
+  animation: none !important;
+}
+
+.animations-low .animate-spin {
+  animation: spin 1s linear infinite !important;
+}
+
+.animations-low .hover\:transform:hover {
+  transform: none !important;
+}
+
+.animations-low .hover\:scale:hover {
+  transform: none !important;
+}
+
+.animations-medium * {
+  animation-duration: 0.3s !important;
+  transition-duration: 0.2s !important;
+  transition-timing-function: ease-out !important;
+}
+
+.animations-high * {
+  animation-duration: 0.5s !important;
+  transition-duration: 0.3s !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.animations-high .hover\:transform:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+}
+
+.animations-high .hover\:scale:hover {
+  transform: scale(1.05) !important;
+}
+
+/* Card hover enhancements in high animation mode */
+.animations-high .glass-morphism:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: var(--accent-glow-strong) !important;
+}
+
+/* Button enhancements in high animation mode */
+.animations-high button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: var(--accent-glow) !important;
+}
+
+/* Background parallax effect for high animation mode */
+.animations-high[data-background-mode="image"]::before {
+  animation: subtleParallax 20s ease-in-out infinite;
+}
+
+@keyframes subtleParallax {
+  0%, 100% { transform: translateX(0) translateY(0) scale(1); }
+  50% { transform: translateX(-10px) translateY(-5px) scale(1.02); }
+}

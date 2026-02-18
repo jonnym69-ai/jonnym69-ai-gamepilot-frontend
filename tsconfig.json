@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shared/*": ["../../packages/shared/src/*"],
+      "@gamepilot/shared": ["../../packages/shared/src"],
+      "@gamepilot/ui": ["../../packages/ui/src"],
+      "@gamepilot/ui/*": ["../../packages/ui/src/*"],
+      "@gamepilot/integrations": ["../../packages/integrations/dist"],
+      "@gamepilot/types": ["../../packages/types/src"],
+      "@gamepilot/static-data": ["../../packages/static-data/src"]
+    }
+  },
+  "include": ["src", "e2e", "../../packages/static-data/src", "../../packages/types/src", "../../packages/shared/src", "../../packages/identity-engine/src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/__tests__/**/*", "src/**/*.d.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

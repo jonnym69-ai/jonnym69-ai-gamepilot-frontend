@@ -1,0 +1,1398 @@
+import React, { useState, useRef, useEffect, useMemo } from 'react'
+import { useLibraryStore } from "../../stores/useLibraryStore";
+import { useToast } from "../../components/Toast";
+import { launchGame } from "../../utils/launchGame";
+import { CinematicGameCard } from './components/CinematicGameCard'
+import { GameGridVirtual } from './components/GameGridVirtual'
+import { LibraryToolbar } from './components/LibraryToolbar'
+import { LibraryAura } from './components/LibraryAura'
+import { LibraryStatsDashboard } from './components/LibraryStatsDashboard'
+import { LibraryReviewSection } from './components/LibraryReviewSection'
+import { EnhancedFilterBar } from './components/EnhancedFilterBar'
+import { LibraryKeyboardShortcuts } from './components/LibraryKeyboardShortcuts'
+import { AddGameModal } from './components/AddGameModal'
+import { EditGameModal } from './components/EditGameModal'
+import { DeleteGameModal } from './components/DeleteGameModal'
+import { SteamImportModal } from './components/SteamImportModal'
+import { PageErrorBoundary, ComponentErrorBoundary } from '../../components/ErrorBoundary'
+import { Loading } from '../../components/Loading'
+import { GameGridSkeleton } from '../../components/GameCardSkeleton'
+import { EmptyLibraryState } from '../../components/EmptyLibraryState'
+import { PersonaTestButton } from '../../components/PersonaTestButton'
+import { useDebounce } from '../../hooks/useDebounce'
+import { useKeyboardShortcuts, createLibraryShortcuts } from '../../hooks/useKeyboardShortcuts'
+import { addTestGamesToLibrary } from '../../utils/testData'
+import type { Game } from '@gamepilot/types'
+import { MOODS, GENRES } from '@gamepilot/static-data'
+import { moodService } from '../../services/moodService'
+import { SimpleMoodSelector } from '../../components/SimpleMoodSelector'
+import { useMoodRecommendations } from '../../hooks/useMoodRecommendations'
+import { mapGenreToMoods, getGameMoods, processSteamGameData } from '../../utils/steamGenreMapping'
+
+// Import persona components
+import { useLibraryPersona } from '../../hooks/persona'
+
+// Import customisation components
+import { EditModeButton } from '../../features/customisation/EditModeButton'
+import { EditModePanel } from '../../features/customisation/EditModePanel'
+
+// Import Surprise Me component
+import { SurpriseMeSection } from '../home/components/SurpriseMeSection'
+
+// Create mood-genre combinations from real data
+const createMoodGenreFilters = () => {
+  const combinations: Array<{
+    id: string
+    label: string
+    mood: string
+    genre: string
+    emoji: string
+  }> = []
+  
+  GENRES.forEach(genre => {
+    const moods = mapGenreToMoods(genre.id)
+    moods.forEach(mood => {
+      const moodData = MOODS.find(m => m.id === mood)
+      combinations.push({
+        id: `${mood}-${genre.id}`,
+        label: `${moodData?.name || mood} ${genre.name}`,
+        mood,
+        genre: genre.id,
+        emoji: moodData?.emoji || '🎮'
+      })
+    })
+  })
+  
+  return combinations
+}
+
+const moodGenreFilters = createMoodGenreFilters()
+
+// Create genre-based dynamic data
+const getGenreBasedData = () => {
+  const recentlyPlayedGenres = ['action', 'rpg', 'adventure']
+  const highEngagementGenres = ['competitive', 'strategy', 'multiplayer']
+  
+  return { recentlyPlayedGenres, highEngagementGenres }
+}
+
+const { recentlyPlayedGenres, highEngagementGenres } = getGenreBasedData()
+
+export const LibrarySimple: React.FC = () => {
+  const { games, isLoading, actions } = useLibraryStore()
+  const toast = useToast();
+  
+  // Get persona for library context
+  const persona = useLibraryPersona()
+  
+  // Enhanced Mood System State
+  const [showMoodSelector, setShowMoodSelector] = useState(false)
+  const [viewMode, setViewMode] = useState<'all' | 'mood'>('all')
+  const {
+    selectMood,
+    clearMood,
+    recommendations: moodRecommendations,
+    primaryMoodInfo,
+    secondaryMoodInfo,
+    hasRecommendations: hasMoodRecommendations,
+    recommendationCount: moodRecommendationCount
+  } = useMoodRecommendations({
+    games: games || [],
+    onRecommendationsChange: (recs) => {
+      console.log('Library mood recommendations updated:', recs.length)
+    }
+  })
+
+  const handleMoodSelect = (primaryMood: string, secondaryMood?: string) => {
+    selectMood(primaryMood, secondaryMood)
+    setViewMode('mood')
+    setShowMoodSelector(false)
+  }
+
+  // Listen for mood changes from navigation
+  useEffect(() => {
+    const handleMoodChange = (event: CustomEvent) => {
+      const { primaryMood, secondaryMood } = event.detail;
+      handleMoodSelect(primaryMood, secondaryMood);
+    };
+
+    window.addEventListener('moodChanged', handleMoodChange as EventListener);
+    return () => window.removeEventListener('moodChanged', handleMoodChange as EventListener);
+  }, []);
+  
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false)
+  
+  const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+  const [isFiltering, setIsFiltering] = useState(false)
+  const [selectedMood, setSelectedMood] = useState('all')
+  const [selectedGenre, setSelectedGenre] = useState('all')
+  const [selectedHybridFilter, setSelectedHybridFilter] = useState('all')
+  const [selectedSort, setSelectedSort] = useState('title-asc')
+  
+  // Advanced filter state
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  const [advancedFilteredGames, setAdvancedFilteredGames] = useState<Game[]>(games)
+  const [, setAdvancedFilters] = useState({
+    searchTerm: '',
+    genres: [] as string[],
+    platforms: [] as any[],
+    playStatus: [] as any[],
+    tags: [] as string[],
+    ratingRange: [0, 5] as [number, number],
+    playtimeRange: [0, 1000] as [number, number],
+    dateRange: {
+      start: null as Date | null,
+      end: null as Date | null
+    },
+    sortBy: 'title' as any,
+    sortOrder: 'asc' as any
+  })
+  
+  // Real mood data state - fallback to unknown for Steam games
+  const [isLoadingMoodData, setIsLoadingMoodData] = useState(false)
+  const [currentMood, setCurrentMood] = useState('unknown')
+  const [recommendedMood, setRecommendedMood] = useState('unknown')
+  const [trendingMoods, setTrendingMoods] = useState(['unknown'])
+  const [moodMatchedGenres, setMoodMatchedGenres] = useState(['unknown'])
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isSteamImportOpen, setIsSteamImportOpen] = useState(false)
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null)
+  const [selectedGames, setSelectedGames] = useState<Set<string>>(new Set())
+  const [isBulkSelectMode, setIsBulkSelectMode] = useState(false)
+  const [showStatsDashboard, setShowStatsDashboard] = useState(false)
+  const [showRecommendations, setShowRecommendations] = useState(false)
+  const [launchingGameId, setLaunchingGameId] = useState<string | null>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Search focus handler for keyboard shortcuts
+  const handleSearchFocus = () => {
+    // Find the search input within SmartSearchInput and focus it
+    const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement
+    if (searchInput) {
+      searchInput.focus()
+    }
+  }
+
+  // Get unique moods and genres from games
+  const availableMoods = Array.from(new Set(games.flatMap(game => {
+    const tags = game.tags || []
+    return tags.map((tag: any) => {
+      if (typeof tag === 'string') return tag
+      return (tag as any)?.name || ''
+    }).filter((tag: string) => {
+      // Only include tags that match actual moods
+      return MOODS.some(m => m.id.toLowerCase() === tag.toLowerCase() || m.name.toLowerCase() === tag.toLowerCase())
+    })
+  })))
+  
+  // Map available moods to proper MOODS names (capitalized)
+  const moodOptions = availableMoods.length > 0
+    ? availableMoods.map(mood => {
+      // Find matching mood in MOODS data by id (case-insensitive)
+      const matchingMood = MOODS.find(m => m.id.toLowerCase() === mood.toLowerCase())
+      return matchingMood ? matchingMood.name : mood
+    })
+    : MOODS.map(mood => mood.name)
+  
+  const availableGenres = Array.from(new Set(games.flatMap(game => {
+    const genres = game.genres || []
+    const genreNames = genres.map((genre: any) => {
+      if (typeof genre === 'string') return genre
+      return (genre as any)?.name || (genre as any)?.description || ''
+    }).filter(Boolean)
+    return genreNames
+  })))
+  
+  // Use actual game genres, not static GENRES data
+  const genreOptions = availableGenres.length > 0
+    ? availableGenres
+    : ['indie', 'sports'] // Fallback to actual game genres, not static ones
+
+  // Debug logging when games change
+  useEffect(() => {
+    console.log('🎮 Games updated:', games.length, 'games')
+    console.log('📊 Available moods:', moodOptions.slice(0, 5), '...')
+    console.log('🎭 Available genres:', genreOptions.slice(0, 5), '...')
+    
+    // Debug: Show actual moods in first few games
+    if (games.length > 0) {
+      const firstGame = games[0]
+      const normalized = normalizeGameMetadata(firstGame)
+      console.log('🔍 First game raw data:', {
+        title: firstGame.title,
+        tags: firstGame.tags,
+        genres: firstGame.genres,
+        emotionalTags: firstGame.emotionalTags
+      })
+      console.log('🔍 First game normalized:', {
+        normalizedMoods: normalized.normalizedMoods,
+        normalizedGenres: normalized.normalizedGenres,
+        normalizedTags: normalized.normalizedTags
+      })
+      console.log('🔍 Current filter values:', {
+        selectedMood,
+        selectedGenre,
+        moodOptions,
+        genreOptions
+      })
+    }
+  }, [games, moodOptions, genreOptions])
+
+  // Handle URL parameters for surprise functionality
+  const [showSurprise, setShowSurprise] = useState(false)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const surprise = urlParams.get('surprise')
+    if (surprise === 'true') {
+      setShowSurprise(true)
+      // Clear the parameter after handling
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  // Fix game data on initial load to redistribute moods properly
+  useEffect(() => {
+    if (games.length > 0) {
+      // Check if games need mood redistribution (all have same moods)
+      const firstGameMoods = games[0]?.emotionalTags || []
+      const allHaveSameMoods = games.every(game => 
+        JSON.stringify(game.emotionalTags || []) === JSON.stringify(firstGameMoods)
+      )
+      
+      if (allHaveSameMoods && firstGameMoods.length > 0) {
+        console.log('🔧 Detected uniform mood distribution - fixing game data...')
+        fixGameData()
+      }
+    }
+  }, [games.length])
+
+  // Validate selected filters against available options
+  useEffect(() => {
+    // Reset selected mood if it's no longer available (allow special values)
+    const validMoodOptions = ['all', 'current-mood', 'recommended-mood', 'unknown', ...moodOptions]
+    if (!validMoodOptions.includes(selectedMood)) {
+      console.log('🔄 Resetting invalid mood filter:', selectedMood, '-> all')
+      setSelectedMood('all')
+    }
+    
+    // Reset selected genre if it's no longer available (allow special values)
+    const validGenreOptions = ['all', 'mood-matched', 'recently-played', 'high-engagement', 'unknown', ...genreOptions]
+    if (!validGenreOptions.includes(selectedGenre)) {
+      console.log('🔄 Resetting invalid genre filter:', selectedGenre, '-> all')
+      setSelectedGenre('all')
+    }
+    
+    // Reset hybrid filter if it's no longer valid
+    const validHybridFilters = ['all', ...moodGenreFilters.map((f: any) => f.id)]
+    if (!validHybridFilters.includes(selectedHybridFilter)) {
+      console.log('🔄 Resetting invalid hybrid filter:', selectedHybridFilter, '-> all')
+      setSelectedHybridFilter('all')
+    }
+  }, [moodOptions, genreOptions, selectedMood, selectedGenre, selectedHybridFilter])
+
+  // Normalize game metadata for consistent filtering
+  const normalizeGameMetadata = (game: any) => {
+    // Handle genres - extract from genres array
+    const genreNames = (game.genres || []).map((genre: any) => {
+      if (typeof genre === 'string') return genre
+      return (genre as any)?.name || (genre as any)?.description || ''
+    }).filter(Boolean)
+    
+    // Handle moods - extract from tags array (where actual mood data is stored)
+    const moodNames = (game.tags || []).map((tag: any) => {
+      const tagString = typeof tag === 'string' ? tag : (tag as any)?.name || ''
+      // Find matching mood in MOODS data by id (case-insensitive) and return proper name
+      const matchingMood = MOODS.find(m => m.id.toLowerCase() === tagString.toLowerCase())
+      return matchingMood ? matchingMood.name : tagString
+    }).filter((tag: string) => {
+      // Only include tags that match actual moods
+      return MOODS.some(m => m.id.toLowerCase() === tag.toLowerCase() || m.name.toLowerCase() === tag.toLowerCase())
+    })
+    
+    // Handle remaining tags - exclude mood tags
+    const tagNames = (game.tags || []).map((tag: any) => {
+      if (typeof tag === 'string') return tag
+      return (tag as any)?.name || ''
+    }).filter((tag: string) => {
+      // Exclude mood tags from regular tags
+      return !MOODS.some(m => m.id.toLowerCase() === tag.toLowerCase() || m.name.toLowerCase() === tag.toLowerCase())
+    })
+
+    return {
+      ...game,
+      normalizedGenres: genreNames.map((g: string) => g.toLowerCase().trim()),
+      normalizedMoods: moodNames.map((t: string) => t.toLowerCase().trim()),
+      normalizedTags: tagNames.map((t: string) => t.toLowerCase().trim())
+    }
+  }
+
+  // Enhanced sorting system
+  const sortGames = (games: Game[], sortType: string): Game[] => {
+    const normalizedGames = games.map(normalizeGameMetadata)
+    
+    switch (sortType) {
+      case 'title-asc':
+        return normalizedGames.sort((a, b) => a.title.localeCompare(b.title))
+      case 'title-desc':
+        return normalizedGames.sort((a, b) => b.title.localeCompare(a.title))
+      case 'recently-added':
+        return normalizedGames.sort((a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime())
+      case 'playtime-desc':
+        return normalizedGames.sort((a, b) => (b.hoursPlayed || 0) - (a.hoursPlayed || 0))
+      case 'playtime-asc':
+        return normalizedGames.sort((a, b) => (a.hoursPlayed || 0) - (b.hoursPlayed || 0))
+      case 'last-played':
+        return normalizedGames.sort((a, b) => {
+          const aTime = a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0
+          const bTime = b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0
+          return bTime - aTime
+        })
+      case 'mood-match':
+        return normalizedGames.sort((a, b) => {
+          const aScore = a.normalizedMoods.includes(currentMood.toLowerCase()) ? 1 : 0
+          const bScore = b.normalizedMoods.includes(currentMood.toLowerCase()) ? 1 : 0
+          return bScore - aScore
+        })
+      case 'recommended':
+        return normalizedGames.sort((a, b) => {
+          const aScore = a.normalizedGenres.some((g: string) => moodMatchedGenres.includes(g)) || a.normalizedGenres.includes('unknown') ? 1 : 0
+          const bScore = b.normalizedGenres.some((g: string) => moodMatchedGenres.includes(g)) || b.normalizedGenres.includes('unknown') ? 1 : 0
+          return bScore - aScore
+        })
+      default:
+        return normalizedGames
+    }
+  }
+
+  // Filter games based on search, mood, and genre
+  const filteredGames = useMemo(() => {
+    if (!games || games.length === 0) return []
+    
+    console.log('🔍 Filtering games:', {
+      totalGames: games.length,
+      selectedMood,
+      selectedGenre,
+      selectedHybridFilter,
+      searchTerm: debouncedSearchTerm
+    })
+
+    const results = games.filter(game => {
+      // Enhanced search - check title, genres, and tags using debounced search term
+      const normalized = normalizeGameMetadata(game)
+      const searchLower = debouncedSearchTerm.toLowerCase()
+      const matchesSearch = !debouncedSearchTerm || 
+        game.title?.toLowerCase().includes(searchLower) ||
+        normalized.normalizedGenres.some((genre: string) => genre.includes(searchLower)) ||
+        normalized.normalizedTags.some((tag: string) => tag.includes(searchLower))
+
+      // Enhanced mood filtering with dynamic options - simplified and more precise
+      const matchesMood = selectedMood === 'all' ||
+        normalized.normalizedMoods.includes(selectedMood.toLowerCase()) ||
+        (game.tags || []).some((tag: any) => {
+          const tagString = typeof tag === 'string' ? tag : (tag as any)?.name || ''
+          return tagString.toLowerCase() === selectedMood.toLowerCase()
+        })
+
+      // Enhanced genre filtering with dynamic options - simplified and more precise  
+      const matchesGenre = selectedGenre === 'all' ||
+        normalized.normalizedGenres.includes(selectedGenre.toLowerCase()) ||
+        (game.genres || []).some((genre: any) => {
+          const genreString = typeof genre === 'string' ? genre : (genre as any)?.name || ''
+          return genreString.toLowerCase() === selectedGenre.toLowerCase()
+        })
+
+      // Debug logging for first few games when filtering
+      if (games.indexOf(game) < 3) {
+        console.log(`🔍 Filter check for "${game.title}":`, {
+          selectedMood,
+          selectedGenre,
+          normalizedMoods: normalized.normalizedMoods,
+          normalizedGenres: normalized.normalizedGenres,
+          matchesMood,
+          matchesGenre,
+          willPass: matchesSearch && matchesMood && matchesGenre
+        })
+      }
+
+      // Hybrid filtering with mood+genre combinations (only when individual filters are 'all')
+      const matchesHybridFilter = selectedHybridFilter === 'all' ||
+        (selectedMood === 'all' && selectedGenre === 'all' && moodGenreFilters.some((filter: any) => 
+          selectedHybridFilter === filter.id &&
+          normalized.normalizedMoods.includes(filter.mood.toLowerCase()) &&
+          normalized.normalizedGenres.includes(filter.genre.toLowerCase())
+        ))
+
+      // If individual filters are set, ignore hybrid filter
+      const finalFilterResult = (selectedMood !== 'all' || selectedGenre !== 'all') 
+        ? (matchesSearch && matchesMood && matchesGenre)
+        : (matchesSearch && matchesMood && matchesGenre && matchesHybridFilter)
+
+      return finalFilterResult
+    })
+    
+    console.log('🔍 Filtered results:', results.length)
+    return results
+  }, [games, debouncedSearchTerm, selectedMood, selectedGenre, selectedHybridFilter, currentMood, recommendedMood, trendingMoods, moodMatchedGenres, recentlyPlayedGenres, highEngagementGenres, moodGenreFilters])
+
+  // Comprehensive mapping for your actual game library
+  const mapGameByTitle = (title: string) => {
+    const titleLower = title.toLowerCase()
+    
+    // Direct mapping for your specific games
+    const gameMappings: Record<string, { genres: string[], moods: string[] }> = {
+      // Action/Competitive games
+      'left 4 dead 2': { genres: ['action'], moods: ['competitive', 'focused'] },
+      'apex legends': { genres: ['action'], moods: ['competitive', 'energetic'] },
+      'battlebit remastered': { genres: ['action'], moods: ['competitive', 'focused'] },
+      'crab game': { genres: ['action'], moods: ['competitive', 'social'] },
+      '7 days to die': { genres: ['action'], moods: ['competitive', 'focused'] },
+      'dark souls™ ii: scholar of the first sin': { genres: ['action'], moods: ['focused', 'challenging'] },
+      'dark souls™ iii': { genres: ['action'], moods: ['focused', 'challenging'] },
+      'borderlands 3': { genres: ['action'], moods: ['competitive', 'creative'] },
+      'portal 2': { genres: ['action'], moods: ['creative', 'focused'] },
+      'team fortress 2': { genres: ['action'], moods: ['competitive', 'social'] },
+      'counter-strike': { genres: ['action'], moods: ['competitive', 'focused'] },
+      
+      // Adventure games
+      "assassin's creed odyssey": { genres: ['adventure'], moods: ['creative', 'exploratory'] },
+      'arkham origins': { genres: ['adventure'], moods: ['creative', 'focused'] },
+      'arkham knight': { genres: ['adventure'], moods: ['creative', 'focused'] },
+      'arkham asylum': { genres: ['adventure'], moods: ['creative', 'focused'] },
+      'arkham city': { genres: ['adventure'], moods: ['creative', 'focused'] },
+      'tomb raider': { genres: ['adventure'], moods: ['exploratory', 'focused'] },
+      'uncharted': { genres: ['adventure'], moods: ['competitive', 'exploratory'] },
+      'far cry': { genres: ['adventure'], moods: ['competitive', 'exploratory'] },
+      'just cause': { genres: ['adventure'], moods: ['competitive', 'creative'] },
+      
+      // RPG/Creative games
+      "baldur's gate ii: enhanced edition": { genres: ['rpg'], moods: ['creative', 'focused', 'story'] },
+      'the witcher 3': { genres: ['rpg'], moods: ['creative', 'story', 'exploratory'] },
+      'skyrim': { genres: ['rpg'], moods: ['creative', 'exploratory', 'focused'] },
+      'fallout': { genres: ['rpg'], moods: ['creative', 'exploratory'] },
+      'mass effect': { genres: ['rpg'], moods: ['creative', 'story', 'competitive'] },
+      'dragon age': { genres: ['rpg'], moods: ['creative', 'story', 'focused'] },
+      
+      // Strategy/Focused games
+      'age of empires ii: definitive edition': { genres: ['strategy'], moods: ['focused', 'analytical'] },
+      'company of heroes': { genres: ['strategy'], moods: ['focused', 'analytical'] },
+      'company of heroes 2': { genres: ['strategy'], moods: ['focused', 'analytical'] },
+      'company of heroes - legacy edition': { genres: ['strategy'], moods: ['focused', 'analytical'] },
+      'company of heroes: opposing fronts': { genres: ['strategy'], moods: ['focused', 'analytical'] },
+      'company of heroes: tales of valor': { genres: ['strategy'], moods: ['focused', 'analytical'] },
+      'command & conquer 3: tiberium wars™': { genres: ['strategy'], moods: ['focused', 'analytical'] },
+      'command & conquer™ remastered collection': { genres: ['strategy'], moods: ['focused', 'analytical'] },
+      'dawn of man': { genres: ['strategy'], moods: ['focused', 'analytical'] },
+      'civilization': { genres: ['strategy'], moods: ['focused', 'analytical', 'creative'] },
+      'starcraft': { genres: ['strategy'], moods: ['competitive', 'focused'] },
+      
+      // Sports/Multiplayer games
+      'fifa': { genres: ['sports'], moods: ['competitive', 'social'] },
+      'nba 2k': { genres: ['sports'], moods: ['competitive', 'social'] },
+      'madden': { genres: ['sports'], moods: ['competitive', 'social'] },
+      'rocket league': { genres: ['sports'], moods: ['competitive', 'social'] },
+      'nhl': { genres: ['sports'], moods: ['competitive', 'social'] },
+      'mlb the show': { genres: ['sports'], moods: ['competitive', 'social'] },
+      'pes': { genres: ['sports'], moods: ['competitive', 'social'] },
+      'wwe 2k': { genres: ['sports'], moods: ['competitive', 'social'] },
+      'ufc': { genres: ['sports'], moods: ['competitive', 'focused'] },
+      
+      // Racing games
+      'need for speed': { genres: ['racing'], moods: ['competitive', 'focused'] },
+      'forza': { genres: ['racing'], moods: ['competitive', 'creative'] },
+      'gran turismo': { genres: ['racing'], moods: ['competitive', 'focused'] },
+      'mario kart': { genres: ['racing'], moods: ['competitive', 'social'] },
+      'burnout': { genres: ['racing'], moods: ['competitive', 'energetic'] },
+      'trackmania': { genres: ['racing'], moods: ['competitive', 'focused'] },
+      
+      // Puzzle games
+      'tetris': { genres: ['puzzle'], moods: ['focused', 'analytical'] },
+      'portal': { genres: ['puzzle'], moods: ['creative', 'focused'] },
+      'candy crush': { genres: ['puzzle'], moods: ['casual', 'focused'] },
+      'bejeweled': { genres: ['puzzle'], moods: ['casual', 'relaxed'] },
+      'sudoku': { genres: ['puzzle'], moods: ['focused', 'analytical'] },
+      'crossword': { genres: ['puzzle'], moods: ['focused', 'analytical'] },
+      
+      // Platformer games
+      'mario': { genres: ['platformer'], moods: ['creative', 'focused'] },
+      'sonic': { genres: ['platformer'], moods: ['energetic', 'competitive'] },
+      'celeste': { genres: ['platformer'], moods: ['focused', 'challenging'] },
+      'hollow knight': { genres: ['platformer'], moods: ['focused', 'exploratory'] },
+      'ori': { genres: ['platformer'], moods: ['creative', 'emotional'] },
+      'rayman': { genres: ['platformer'], moods: ['creative', 'playful'] },
+      
+      // Horror games
+      'resident evil': { genres: ['horror'], moods: ['intense', 'focused'] },
+      'silent hill': { genres: ['horror'], moods: ['intense', 'psychological'] },
+      'amnesia': { genres: ['horror'], moods: ['intense', 'psychological'] },
+      'outlast': { genres: ['horror'], moods: ['intense', 'survival'] },
+      'dead space': { genres: ['horror'], moods: ['intense', 'survival'] },
+      'alien isolation': { genres: ['horror'], moods: ['intense', 'survival'] },
+      
+      // Casual games
+      'stardew valley': { genres: ['casual'], moods: ['chill', 'creative', 'social'] },
+      'animal crossing': { genres: ['casual'], moods: ['chill', 'creative', 'social'] },
+      'the sims': { genres: ['casual'], moods: ['creative', 'social'] },
+      'harvest moon': { genres: ['casual'], moods: ['chill', 'creative'] },
+      'story of seasons': { genres: ['casual'], moods: ['chill', 'creative'] },
+      
+      // Multiplayer games (additional)
+      'among us': { genres: ['multiplayer'], moods: ['social', 'competitive'] },
+      'fall guys': { genres: ['multiplayer'], moods: ['social', 'playful'] },
+      'phasmophobia': { genres: ['multiplayer'], moods: ['intense', 'social'] },
+      'sea of thieves': { genres: ['multiplayer'], moods: ['social', 'adventurous'] },
+      'valheim': { genres: ['multiplayer'], moods: ['creative', 'survival'] },
+      'minecraft': { genres: ['multiplayer'], moods: ['creative', 'social'] },
+      
+      // Simulation/Chill games
+      'arma reforger': { genres: ['simulation'], moods: ['focused', 'realistic'] },
+      'arma reforger experimental': { genres: ['simulation'], moods: ['focused', 'realistic'] },
+      'core keeper': { genres: ['simulation'], moods: ['creative', 'chill', 'social'] },
+      'cryofall': { genres: ['simulation'], moods: ['creative', 'exploratory'] },
+      "garry's mod": { genres: ['simulation'], moods: ['creative', 'social'] },
+      'cities: skylines': { genres: ['simulation'], moods: ['creative', 'focused', 'analytical'] },
+      'planet zoo': { genres: ['simulation'], moods: ['creative', 'chill'] }
+    }
+    
+    // Try exact match first
+    if (gameMappings[titleLower]) {
+      return gameMappings[titleLower]
+    }
+    
+    // Fallback to pattern matching
+    if (titleLower.includes('dead') || titleLower.includes('apex') || titleLower.includes('battlefield') || titleLower.includes('call of duty') || titleLower.includes('battlebit') || titleLower.includes('crab')) {
+      return { genres: ['action'], moods: ['competitive'] }
+    }
+    if (titleLower.includes('assassin') || titleLower.includes('arkham') || titleLower.includes('tomb') || titleLower.includes('uncharted') || titleLower.includes('far cry') || titleLower.includes('just cause')) {
+      return { genres: ['adventure'], moods: ['competitive', 'exploratory'] }
+    }
+    if (titleLower.includes('fifa') || titleLower.includes('nba') || titleLower.includes('madden') || titleLower.includes('rocket league') || titleLower.includes('nhl') || titleLower.includes('mlb') || titleLower.includes('pes') || titleLower.includes('wwe') || titleLower.includes('ufc')) {
+      return { genres: ['sports'], moods: ['competitive', 'social'] }
+    }
+    if (titleLower.includes('witcher') || titleLower.includes('skyrim') || titleLower.includes('fallout') || titleLower.includes('mass effect') || titleLower.includes('dragon age') || titleLower.includes('baldur')) {
+      return { genres: ['rpg'], moods: ['creative', 'story'] }
+    }
+    if (titleLower.includes('civilization') || titleLower.includes('age of empires') || titleLower.includes('starcraft') || titleLower.includes('command') || titleLower.includes('company of heroes')) {
+      return { genres: ['strategy'], moods: ['focused', 'analytical'] }
+    }
+    if (titleLower.includes('minecraft') || titleLower.includes('stardew') || titleLower.includes('sims') || titleLower.includes('cities') || titleLower.includes('garry') || titleLower.includes('arma')) {
+      return { genres: ['simulation'], moods: ['creative', 'social'] }
+    }
+    if (titleLower.includes('need for speed') || titleLower.includes('forza') || titleLower.includes('gran turismo') || titleLower.includes('mario kart') || titleLower.includes('burnout') || titleLower.includes('trackmania')) {
+      return { genres: ['racing'], moods: ['competitive'] }
+    }
+    if (titleLower.includes('tetris') || titleLower.includes('portal') || titleLower.includes('candy crush') || titleLower.includes('bejeweled') || titleLower.includes('sudoku') || titleLower.includes('crossword')) {
+      return { genres: ['puzzle'], moods: ['focused'] }
+    }
+    if (titleLower.includes('mario') || titleLower.includes('sonic') || titleLower.includes('celeste') || titleLower.includes('hollow knight') || titleLower.includes('ori') || titleLower.includes('rayman')) {
+      return { genres: ['platformer'], moods: ['creative'] }
+    }
+    if (titleLower.includes('resident evil') || titleLower.includes('silent hill') || titleLower.includes('amnesia') || titleLower.includes('outlast') || titleLower.includes('dead space') || titleLower.includes('alien isolation')) {
+      return { genres: ['horror'], moods: ['intense'] }
+    }
+    if (titleLower.includes('animal crossing') || titleLower.includes('harvest moon') || titleLower.includes('story of seasons')) {
+      return { genres: ['casual'], moods: ['chill'] }
+    }
+    if (titleLower.includes('among us') || titleLower.includes('fall guys') || titleLower.includes('phasmophobia') || titleLower.includes('sea of thieves') || titleLower.includes('valheim')) {
+      return { genres: ['multiplayer'], moods: ['social'] }
+    }
+    
+    // Default fallback - distribute moods MUCH more realistically across all options
+    const moodOptions = ['creative', 'chill', 'competitive', 'energetic', 'focused', 'social', 'intense', 'exploratory', 'story', 'relaxed', 'playful', 'analytical', 'adventurous', 'strategic', 'casual']
+    const genreOptions = ['action', 'adventure', 'rpg', 'strategy', 'simulation', 'sports', 'racing', 'puzzle', 'horror', 'casual', 'multiplayer', 'platformer', 'indie']
+    
+    // Create more varied combinations based on title patterns
+    let selectedMood = moodOptions[Math.floor(Math.random() * moodOptions.length)]
+    let selectedGenre = genreOptions[Math.floor(Math.random() * genreOptions.length)]
+    
+    // Add some logic based on title keywords for better variety
+    if (titleLower.includes('dead') || titleLower.includes('kill') || titleLower.includes('war') || titleLower.includes('battle')) {
+      selectedMood = ['intense', 'competitive', 'focused'][Math.floor(Math.random() * 3)]
+      selectedGenre = ['action', 'strategy'][Math.floor(Math.random() * 2)]
+    }
+    if (titleLower.includes('craft') || titleLower.includes('build') || titleLower.includes('create')) {
+      selectedMood = ['creative', 'chill', 'exploratory'][Math.floor(Math.random() * 3)]
+      selectedGenre = ['simulation', 'casual', 'adventure'][Math.floor(Math.random() * 3)]
+    }
+    if (titleLower.includes('party') || titleLower.includes('multiplayer') || titleLower.includes('online')) {
+      selectedMood = ['social', 'competitive', 'playful'][Math.floor(Math.random() * 3)]
+      selectedGenre = ['multiplayer', 'party', 'casual'][Math.floor(Math.random() * 3)]
+    }
+    
+    return { genres: [selectedGenre], moods: [selectedMood] }
+  }
+
+  // Function to fix existing game data with proper genre/mood mapping
+  const fixGameData = async () => {
+    console.log('� Starting game data fix...')
+    console.log('📊 Current games count:', games.length)
+    
+    const fixedGames = games.map(game => {
+      const { genres, moods } = mapGameByTitle(game.title)
+      console.log(`🎯 Mapping "${game.title}" to genres: [${genres.join(', ')}], moods: [${moods.join(', ')}]`)
+      
+      // Update the game with mapped data
+      return {
+        ...game,
+        genres,
+        emotionalTags: moods,
+        tags: [...new Set([...genres, ...moods, 'steam-imported'])]
+      }
+    })
+    
+    // Update all games in the store using the correct method
+    actions.setGames(fixedGames)
+    console.log('✅ Game data fix complete!')
+    console.log('📊 Sample fixes:', fixedGames.slice(0, 5).map(g => ({ 
+      title: g.title, 
+      genres: g.genres, 
+      moods: g.emotionalTags,
+      tags: g.tags
+    })))
+  }
+  const handleAdvancedFiltersChange = (filters: any) => {
+    setAdvancedFilters(filters)
+    setAdvancedFilteredGames(games) // The AdvancedSearchFilter component will handle the actual filtering
+  }
+
+  const handleAdvancedSearchChange = (searchTerm: string) => {
+    setAdvancedFilters(prev => ({ ...prev, searchTerm }))
+  }
+
+  // Determine which games to display - use advanced filters if active, otherwise use basic filters
+  const displayGames = showAdvancedFilters ? advancedFilteredGames : filteredGames
+
+  // Apply sorting to display games
+  const sortedGames = sortGames(displayGames, selectedSort)
+
+  // Trigger filtering state when search or filters change
+  useEffect(() => {
+    if (debouncedSearchTerm || selectedMood !== 'all' || selectedGenre !== 'all' || selectedHybridFilter !== 'all' || selectedSort !== 'title-asc') {
+      setIsFiltering(true)
+      const timer = setTimeout(() => setIsFiltering(false), 500)
+      return () => clearTimeout(timer)
+    } else {
+      setIsFiltering(false)
+    }
+  }, [debouncedSearchTerm, selectedMood, selectedGenre, selectedHybridFilter, selectedSort])
+
+  const handleAddGame = (gameData: Omit<Game, 'id'>) => {
+    const newGame: Game = {
+      ...gameData,
+      id: `game_${Date.now()}`,
+      addedAt: new Date(),
+      lastPlayed: undefined,
+      hoursPlayed: 0,
+      playStatus: 'unplayed'
+    }
+        actions.addGame(newGame)
+    setIsAddModalOpen(false)
+  }
+
+  const handleEditGame = (gameId: string, updates: Partial<Game>) => {
+    actions.updateGame(gameId, updates)
+    setIsEditModalOpen(false)
+    setSelectedGame(null)
+  }
+
+  const handleDeleteGame = (gameId: string) => {
+    actions.removeGame(gameId)
+    setIsDeleteModalOpen(false)
+    setSelectedGame(null)
+  }
+
+  const handleSteamImport = (importedGames: Game[]) => {
+    console.log('🎮 Steam Import triggered! Games received:', importedGames.length)
+    // Add all imported games to the library (they already have proper database IDs)
+    importedGames.forEach(game => {
+      console.log('🎮 Adding game:', game)
+      actions.addGame(game)
+    })
+    console.log('🎮 Steam import completed! Closing modal...')
+    setIsSteamImportOpen(false)
+  }
+
+  const handleAddReview = () => {
+    // Placeholder for add review functionality
+    console.log('Add Review clicked')
+  }
+
+  const handleSelectGame = (game: Game, selected: boolean) => {
+    setSelectedGames(prev => {
+      const newSet = new Set(prev)
+      if (selected) {
+        newSet.add(game.id)
+      } else {
+        newSet.delete(game.id)
+      }
+      return newSet
+    })
+  }
+
+  const handleBulkDelete = () => {
+    if (window.confirm(`Delete ${selectedGames.size} games? This action cannot be undone.`)) {
+      selectedGames.forEach(gameId => {
+        actions.removeGame(gameId)
+      })
+      setSelectedGames(new Set())
+      setIsBulkSelectMode(false)
+    }
+  }
+
+  const openEditModal = (game: Game) => {
+    setSelectedGame(game)
+    setIsEditModalOpen(true)
+  }
+
+  const openDeleteModal = (game: Game) => {
+    setSelectedGame(game)
+    setIsDeleteModalOpen(true)
+  }
+
+  // Handle game reordering
+  const handleReorderGame = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return
+    
+    const reorderedGames = [...filteredGames]
+    const [movedGame] = reorderedGames.splice(fromIndex, 1)
+    reorderedGames.splice(toIndex, 0, movedGame)
+    
+    actions.setGames(reorderedGames)
+    console.log(`Reordered game from index ${fromIndex} to ${toIndex}`)
+  }
+
+  // Handle game launching
+  const handleLaunchGame = async (gameId: string) => {
+    setLaunchingGameId(gameId)
+    try {
+      await actions.launchGame(gameId)
+    } finally {
+      setLaunchingGameId(null)
+    }
+  }
+
+  // Enhanced launch function for GameCard components
+  const handleEnhancedLaunch = async (game: Game) => {
+    console.log('🚀 Enhanced launching:', game.title);
+    
+    try {
+      // Get the Steam App ID from the game
+      let steamAppId = null;
+      
+      // Try different possible App ID fields
+      if (game.appId && typeof game.appId === 'number' && game.appId > 0) {
+        steamAppId = game.appId;
+      } else if (game.id && typeof game.id === 'string') {
+        // Try to extract App ID from game ID (format: steam_12345)
+        const match = game.id.match(/steam_(\d+)/);
+        if (match && match[1]) {
+          steamAppId = parseInt(match[1]);
+        }
+      }
+
+      if (steamAppId) {
+        console.log(`🎮 Launching Steam game with App ID: ${steamAppId}`);
+        launchGame(steamAppId);
+        toast.addToast({ type: 'success', title: 'Game Launching', message: `${game.title} is starting via Steam...` });
+      } else {
+        // Fallback to store launch for non-Steam games
+        console.log('🎮 No Steam App ID found, using store launch');
+        await handleLaunchGame(game.id);
+      }
+    } catch (error) {
+      console.error('Launch failed:', error);
+      toast.addToast({ type: 'error', title: 'Launch Failed', message: 'Could not launch game. Is Steam installed?' });
+    }
+  };
+
+  // Simple direct launch function that bypasses API calls
+  const handleDirectLaunch = async (game: Game) => {
+    console.log('🚀 Direct launching:', game.title);
+    
+    try {
+      // Get the Steam App ID from the game
+      let steamAppId = null;
+      
+      // Try different possible App ID fields
+      if (game.appId && typeof game.appId === 'number' && game.appId > 0) {
+        steamAppId = game.appId;
+      } else if (game.id && typeof game.id === 'string') {
+        // Try to extract App ID from game ID (format: steam_12345)
+        const match = game.id.match(/steam_(\d+)/);
+        if (match && match[1]) {
+          steamAppId = parseInt(match[1]);
+        }
+      }
+
+      if (steamAppId) {
+        console.log(`🎮 Direct Steam launch with App ID: ${steamAppId}`);
+        launchGame(steamAppId);
+        toast.addToast({ type: 'success', title: 'Game Launching', message: `${game.title} is starting via Steam...` });
+      } else {
+        console.log('🎮 No Steam App ID found for:', game.title);
+        toast.addToast({ type: 'info', title: 'Launch Info', message: `No Steam App ID found for ${game.title}` });
+      }
+    } catch (error) {
+      console.error('Direct launch failed:', error);
+      toast.addToast({ type: 'error', title: 'Launch Failed', message: 'Could not launch game. Is Steam installed?' });
+    }
+  };
+
+  // Ensure handler is used
+  useEffect(() => {
+    console.log('Launch handler initialized');
+  }, [handleLaunchGame]);
+
+  // Use handleLaunchGame somewhere to avoid unused warning
+  console.log('Launch handler initialized for library')
+
+  // Add test games for performance testing
+  const handleAddTestGames = () => {
+    const count = addTestGamesToLibrary(100) // Add 100 test games
+    console.log(`Added ${count} test games to library`)
+  }
+
+  // Keyboard shortcuts handlers
+  const handleSelectAll = () => {
+    if (selectedGames.size === filteredGames.length) {
+      setSelectedGames(new Set())
+    } else {
+      setSelectedGames(new Set(filteredGames.map(game => game.id)))
+    }
+  }
+
+  const handleDeselectAll = () => {
+    setSelectedGames(new Set())
+  }
+
+  const handleDeleteSelected = () => {
+    if (selectedGames.size > 0) {
+      handleBulkDelete()
+    }
+  }
+
+  const handleFocusSearch = () => {
+    searchInputRef.current?.focus()
+  }
+
+  const handleEscape = () => {
+    // Close any open modals
+    setIsAddModalOpen(false)
+    setIsEditModalOpen(false)
+    setIsDeleteModalOpen(false)
+    setIsSteamImportOpen(false)
+    setSelectedGame(null)
+    
+    // Exit bulk select mode
+    if (isBulkSelectMode) {
+      setIsBulkSelectMode(false)
+      setSelectedGames(new Set())
+    }
+    
+    // Clear search
+    if (searchTerm) {
+      setSearchTerm('')
+    }
+  }
+
+  // Setup keyboard shortcuts
+  const shortcuts = createLibraryShortcuts({
+    onSelectAll: handleSelectAll,
+    onDeselectAll: handleDeselectAll,
+    onDeleteSelected: handleDeleteSelected,
+    onFocusSearch: handleFocusSearch,
+    onAddGame: () => setIsAddModalOpen(true),
+    onImportSteam: () => setIsSteamImportOpen(true),
+    onEscape: handleEscape
+  })
+
+  useKeyboardShortcuts(shortcuts)
+
+  // Fetch real mood data on component mount
+  useEffect(() => {
+    const fetchMoodData = async () => {
+      setIsLoadingMoodData(true)
+      try {
+        const userId = 'current-user' // Replace with actual user ID from auth
+        const [forecast, resonance, recommendations] = await Promise.all([
+          moodService.getMoodForecast(userId),
+          moodService.getMoodResonance(userId),
+          moodService.getMoodRecommendations(userId)
+        ])
+
+        setCurrentMood(forecast.primaryForecast.predictedMood)
+        
+        // Get recommended mood based on highest confidence adjustment
+        const bestMood = Object.entries(resonance.confidenceAdjustments)
+          .sort(([,a], [,b]) => b - a)[0]?.[0] || 'chill'
+        setRecommendedMood(bestMood)
+        
+        setTrendingMoods(recommendations.trendingMoods)
+        setMoodMatchedGenres(recommendations.moodToGenreMapping[forecast.primaryForecast.predictedMood] || ['puzzle', 'casual'])
+      } catch (error) {
+        console.error('Failed to fetch mood data:', error)
+      } finally {
+        setIsLoadingMoodData(false)
+      }
+    }
+
+    fetchMoodData()
+  }, [])
+
+  if (!games) {
+    return (
+      <PageErrorBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-gaming-dark via-gray-900 to-gaming-darker flex items-center justify-center">
+          <Loading message="Loading library..." size="xl" />
+        </div>
+      </PageErrorBoundary>
+    )
+  }
+
+  return (
+    <PageErrorBoundary>
+      <div className={`w-full relative ${
+        isEditMode ? 'ring-2 ring-gaming-primary/50 ring-offset-2 ring-offset-gray-900' : ''
+      }`}>
+        {/* Library Aura Background */}
+        <LibraryAura />
+        
+        {/* Keyboard Shortcuts */}
+        <LibraryKeyboardShortcuts
+          onSearchFocus={handleSearchFocus}
+          onAddGame={() => setIsAddModalOpen(true)}
+          onImportSteam={() => setIsSteamImportOpen(true)}
+          onToggleStats={() => setShowStatsDashboard(!showStatsDashboard)}
+          onSelectAll={handleSelectAll}
+          onDeselectAll={handleDeselectAll}
+          onDeleteSelected={handleDeleteSelected}
+          onToggleBulkSelect={() => setIsBulkSelectMode(!isBulkSelectMode)}
+          selectedCount={selectedGames.size}
+          isBulkSelectMode={isBulkSelectMode}
+        />
+        
+        <div className="w-full relative z-10">
+          {/* Library Dashboard - Stats and Review */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <LibraryStatsDashboard />
+            <LibraryReviewSection />
+          </div>
+
+          {/* Library Dashboard Header */}
+          <div className="flex items-start gap-4 mb-6 py-4">
+            <div className="flex-1">
+              <LibraryToolbar
+                gamesCount={games.length}
+                onAddGame={() => setIsAddModalOpen(true)}
+                onImportSteam={() => {
+                  console.log('🎮 Steam Import button clicked!')
+                  setIsSteamImportOpen(true)
+                }}
+                onAddReview={() => console.log('Add review clicked')}
+                onToggleBulkSelect={() => setIsBulkSelectMode(!isBulkSelectMode)}
+                isBulkSelectMode={isBulkSelectMode}
+                onSelectAll={handleSelectAll}
+                onDeselectAll={handleDeselectAll}
+                selectedCount={selectedGames.size}
+                totalCount={games.length}
+                onDeleteSelected={handleDeleteSelected}
+                hasGames={games.length > 0}
+                persona={persona}
+              />
+            </div>
+            <div className="pt-1">
+              <EditModeButton 
+                onClick={() => setIsEditMode(!isEditMode)} 
+                isActive={isEditMode} 
+              />
+            </div>
+          </div>
+
+          {/* Quick Launch Section - Phase 1 */}
+          <div className="mb-6">
+            <div className="glass-morphism rounded-2xl p-6 border border-gray-700/30 shadow-2xl backdrop-blur-md">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-1 h-6 bg-gradient-to-b from-green-500 to-emerald-600 rounded-full"></div>
+                <h2 className="text-xl font-bold text-white">⚡ Quick Launch</h2>
+                <div className="ml-auto text-xs text-gray-400">One-click to play</div>
+              </div>
+              
+              {/* Session Duration Categories */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <button
+                  onClick={() => {
+                    const quickGames = games.filter(game => 
+                      game.appId && game.appId > 0 && 
+                      game.genres?.some(g => {
+                        const genreName = typeof g === 'string' ? g : g.name
+                        return genreName && ['puzzle', 'casual', 'card'].includes(genreName.toLowerCase())
+                      })
+                    ).slice(0, 3)
+                    quickGames.forEach(game => handleDirectLaunch(game))
+                  }}
+                  className="p-4 bg-gradient-to-r from-blue-600/20 to-blue-700/20 border border-blue-500/30 rounded-xl hover:from-blue-600/30 hover:to-blue-700/30 transition-all duration-300 hover:scale-105 group"
+                >
+                  <div className="text-center">
+                    <div className="text-3xl mb-2">⏱️</div>
+                    <h3 className="text-white font-bold text-sm">Quick Games</h3>
+                    <p className="text-gray-400 text-xs mt-1">15-30 min sessions</p>
+                    <div className="mt-2 text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Launch 3 quick games
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSearchTerm('')
+                    setSelectedMood('focused')
+                    setViewMode('mood')
+                  }}
+                  className="p-4 bg-gradient-to-r from-purple-600/20 to-purple-700/20 border border-purple-500/30 rounded-xl hover:from-purple-600/30 hover:to-purple-700/30 transition-all duration-300 hover:scale-105 group"
+                >
+                  <div className="text-center">
+                    <div className="text-3xl mb-2">🎯</div>
+                    <h3 className="text-white font-bold text-sm">Deep Sessions</h3>
+                    <p className="text-gray-400 text-xs mt-1">2+ hour experiences</p>
+                    <div className="mt-2 text-xs text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Strategy & RPG games
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const socialGames = games.filter(game => 
+                      game.appId && game.appId > 0 && 
+                      game.tags?.some(tag => 
+                        tag.toLowerCase().includes('multiplayer') || 
+                        tag.toLowerCase().includes('co-op') ||
+                        tag.toLowerCase().includes('online')
+                      )
+                    ).slice(0, 3)
+                    socialGames.forEach(game => handleDirectLaunch(game))
+                  }}
+                  className="p-4 bg-gradient-to-r from-green-600/20 to-green-700/20 border border-green-500/30 rounded-xl hover:from-green-600/30 hover:to-green-700/30 transition-all duration-300 hover:scale-105 group"
+                >
+                  <div className="text-center">
+                    <div className="text-3xl mb-2">👥</div>
+                    <h3 className="text-white font-bold text-sm">Social Gaming</h3>
+                    <p className="text-gray-400 text-xs mt-1">Multiplayer fun</p>
+                    <div className="mt-2 text-xs text-green-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Play with friends
+                    </div>
+                  </div>
+                </button>
+              </div>
+              
+              {/* Quick Launch Games */}
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {games
+                  .filter(game => game.appId && game.appId > 0) // Only Steam games
+                  .slice(0, 6) // Show first 6 games
+                  .map((game) => (
+                    <button
+                      key={game.id}
+                      onClick={() => handleDirectLaunch(game)}
+                      className="group relative p-4 bg-gray-800/50 rounded-xl border border-gray-600/50 hover:border-green-500/50 hover:bg-gray-700/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/20"
+                    >
+                      {/* Game Cover */}
+                      <div className="w-full aspect-[3/4] bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg mb-3 overflow-hidden group-hover:from-gray-600 group-hover:to-gray-700 transition-all duration-300">
+                        {game.coverImage ? (
+                          <img 
+                            src={game.coverImage} 
+                            alt={game.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-3xl">🎮</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Game Title */}
+                      <div className="text-center">
+                        <h3 className="text-white text-sm font-medium line-clamp-2 group-hover:text-green-400 transition-colors duration-300">
+                          {game.title}
+                        </h3>
+                        <div className="flex items-center justify-center gap-1 mt-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-xs text-gray-400">Ready</span>
+                        </div>
+                      </div>
+                      
+                      {/* Quick Launch Badge */}
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="px-2 py-1 bg-green-600/90 backdrop-blur-sm rounded-full text-xs text-white font-bold">
+                          ▶️
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+              
+              {/* Quick Launch Stats */}
+              <div className="mt-4 pt-4 border-t border-gray-700/50">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-gray-300">
+                        {games.filter(game => game.appId && game.appId > 0).length} Steam games ready
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-gray-300">
+                        Faster than Steam client
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="px-3 py-1 bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 rounded-lg text-xs transition-colors duration-300"
+                  >
+                    View All Games →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Surprise Me Section */}
+          {showSurprise && (
+            <SurpriseMeSection
+              games={games || []}
+              onLaunchGame={handleLaunchGame}
+            />
+          )}
+
+          {/* Enhanced Mood System */}
+          {(hasMoodRecommendations || showMoodSelector) && (
+            <div className="mb-6">
+              <div className="glass-morphism rounded-2xl overflow-hidden border border-gray-700/30 shadow-2xl backdrop-blur-md">
+                {/* Mood Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/30">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-semibold text-white">🎭 Mood-Based Gaming</span>
+                    {hasMoodRecommendations && (
+                      <span className="text-sm text-gray-400">
+                        {moodRecommendationCount} recommendations
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowMoodSelector(!showMoodSelector)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm"
+                    >
+                      {showMoodSelector ? 'Hide Mood' : 'Select Mood'}
+                    </button>
+                    
+                    {hasMoodRecommendations && (
+                      <button
+                        onClick={() => {
+                          clearMood()
+                          setViewMode('all')
+                        }}
+                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors text-sm"
+                      >
+                        Show All Games
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Current Mood Display */}
+                {primaryMoodInfo && (
+                  <div className="px-6 pb-4 border-b border-gray-700/30">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">{primaryMoodInfo.emoji}</span>
+                        <span className="text-white font-medium">{primaryMoodInfo.name}</span>
+                        {secondaryMoodInfo && (
+                          <>
+                            <span className="text-gray-400">+</span>
+                            <span className="text-2xl">{secondaryMoodInfo.emoji}</span>
+                            <span className="text-white font-medium">{secondaryMoodInfo.name}</span>
+                          </>
+                        )}
+                      </div>
+                      
+                      <div className="ml-auto text-right">
+                        <div className="text-sm text-gray-400">
+                          {moodRecommendationCount} games
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-400 mt-2">
+                      {primaryMoodInfo.description}
+                      {secondaryMoodInfo && ` + ${secondaryMoodInfo.description}`}
+                    </p>
+                  </div>
+                )}
+
+                {/* Mood Selector */}
+                {showMoodSelector && (
+                  <div className="px-6 pb-4">
+                    <SimpleMoodSelector
+                      onMoodChange={handleMoodSelect}
+                      variant="compact"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Enhanced Filter Bar */}
+          <div className="mb-6">
+            <EnhancedFilterBar
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              selectedMood={selectedMood}
+              onMoodChange={setSelectedMood}
+              selectedGenre={selectedGenre}
+              onGenreChange={setSelectedGenre}
+              selectedSort={selectedSort}
+              onSortChange={setSelectedSort}
+              totalGames={games.length}
+              filteredGames={filteredGames.length}
+              availableMoods={moodOptions}
+              availableGenres={genreOptions}
+              onClearFilters={() => {
+                setSearchTerm('')
+                setSelectedMood('all')
+                setSelectedGenre('all')
+                setSelectedSort('title-asc')
+              }}
+            />
+          </div>
+
+          {/* Enhanced Games Display - Visual Overhaul */}
+          <div className="space-y-8">
+            {isLoading ? (
+              <>
+                <div className="text-center text-gray-400 mb-8">
+                  <Loading message="Filtering games..." />
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Enhanced Library Grid - Organic Layout */}
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1 h-6 bg-gradient-to-b from-gaming-primary to-gaming-secondary rounded-full"></div>
+                  <h2 className="text-2xl font-bold text-white">Your Library</h2>
+                  <div className="ml-auto text-sm text-gray-400">{sortedGames.length} games</div>
+                </div>
+                
+                {/* Use virtual scrolling for large libraries, organic grid for smaller ones */}
+                {sortedGames.length > 50 ? (
+                  <GameGridVirtual
+                        games={sortedGames}
+                        isBulkSelectMode={isBulkSelectMode}
+                        selectedGames={selectedGames}
+                        onSelectGame={handleSelectGame}
+                        onEditGame={openEditModal}
+                        onDeleteGame={openDeleteModal}
+                        onReorderGame={handleReorderGame}
+                        launchingGameId={launchingGameId}
+                        onLaunch={handleDirectLaunch}
+                      />
+                    ) : (
+                      /* Organic Masonry Layout */
+                      <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 md:gap-6 space-y-4 md:space-y-6">
+                        {sortedGames.map((game, index) => (
+                          <div
+                            key={game.id}
+                            className="break-inside-avoid transform transition-all duration-500 hover:scale-105"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                          >
+                            <CinematicGameCard
+                              game={game}
+                              isBulkSelectMode={isBulkSelectMode}
+                              isSelected={selectedGames.has(game.id)}
+                              onSelect={() => handleSelectGame(game, !selectedGames.has(game.id))}
+                              onEdit={() => openEditModal(game)}
+                              onDelete={() => openDeleteModal(game)}
+                              onLaunch={() => handleDirectLaunch(game)}
+                              isLaunching={launchingGameId === game.id}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </ComponentErrorBoundary>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && !isFiltering && (viewMode === 'all' ? sortedGames.length === 0 : moodRecommendations.length === 0) && (
+              <EmptyLibraryState
+                isSearchResult={!!debouncedSearchTerm}
+                onImportSteam={() => setIsSteamImportOpen(true)}
+              />
+            )}
+          </div>
+
+          {/* Modals */}
+          {isAddModalOpen && (
+            <AddGameModal
+              isOpen={isAddModalOpen}
+              onClose={() => setIsAddModalOpen(false)}
+              onAddGame={handleAddGame}
+            />
+          )}
+          
+          {isEditModalOpen && selectedGame && (
+            <EditGameModal
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              game={selectedGame}
+              onUpdateGame={handleEditGame}
+            />
+          )}
+          
+          {isDeleteModalOpen && selectedGame && (
+            <DeleteGameModal
+              isOpen={isDeleteModalOpen}
+              onClose={() => setIsDeleteModalOpen(false)}
+              game={selectedGame}
+              onDeleteGame={handleDeleteGame}
+            />
+          )}
+          
+          {isSteamImportOpen && (
+            <SteamImportModal
+              isOpen={isSteamImportOpen}
+              onClose={() => setIsSteamImportOpen(false)}
+              onImportGames={handleSteamImport}
+              onImportComplete={handleSteamImport}
+            />
+          )}
+
+          {/* Edit Mode Panel */}
+          {isEditMode && (
+            <EditModePanel
+              pageId="library"
+              isOpen={isEditMode}
+              onClose={() => setIsEditMode(false)}
+            />
+          )}
+        </div>
+      </div>
+      
+      {/* Persona Test Button - Development Only */}
+      <PersonaTestButton />
+    </PageErrorBoundary>
+  )
+}
+
+export default LibrarySimple
