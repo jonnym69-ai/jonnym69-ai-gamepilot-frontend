@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd apps/web && npm install && npm run build",
+  "buildCommand": "cd apps/web && mv package.standalone.json package.json && npm install && npm run build",
   "outputDirectory": "apps/web/dist",
-  "installCommand": "cd apps/web && npm install",
+  "installCommand": "cd apps/web && mv package.standalone.json package.json && npm install",
   "devCommand": "cd apps/web && npm run dev",
   "env": {
     "VITE_SUPABASE_URL": "@supabase_url",
