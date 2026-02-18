@@ -1,0 +1,1 @@
+import{j as e,k as o}from"./index-2zxZw9Mw.js";const l=({children:s,className:d,variant:r="default"})=>e.jsx("div",{className:o("rounded-lg p-4",{"bg-white/10 backdrop-blur-md border border-white/20":r==="glass","bg-gray-900":r==="solid","bg-gray-800":r==="default"},d),children:s});export{l as C};

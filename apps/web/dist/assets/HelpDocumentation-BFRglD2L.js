@@ -1,4 +1,4 @@
-import{j as e,r as c}from"./index-db369dc9.js";const f=({children:i,className:r=""})=>e.jsx("div",{className:`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-6 ${r}`,children:i}),b=()=>{const[i,r]=c.useState(""),[n,g]=c.useState("all"),[l,p]=c.useState(new Set),m=[{id:"getting-started",title:"Getting Started with GamePilot",description:"Learn the basics of GamePilot and set up your profile",content:`
+import{j as e,r as c}from"./index-2zxZw9Mw.js";const f=({children:i,className:r=""})=>e.jsx("div",{className:`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-6 ${r}`,children:i}),b=()=>{const[i,r]=c.useState(""),[n,g]=c.useState("all"),[l,p]=c.useState(new Set),m=[{id:"getting-started",title:"Getting Started with GamePilot",description:"Learn the basics of GamePilot and set up your profile",content:`
 # Getting Started with GamePilot
 
 Welcome to GamePilot! This guide will help you get started with your personalized gaming experience.
