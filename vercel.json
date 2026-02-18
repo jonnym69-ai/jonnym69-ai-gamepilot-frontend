@@ -5,8 +5,8 @@
   "installCommand": "npm install",
   "env": {
     "VITE_API_URL": "https://gamepilot-main.onrender.com",
-    "VITE_SUPABASE_URL": "@supabase_url",
-    "VITE_SUPABASE_ANON_KEY": "@supabase_anon_key",
+    "VITE_SUPABASE_URL": "https://luzptvrbzoonufqxlrrm.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "VITE_ENABLE_STEAM_INTEGRATION": "true",
     "NODE_ENV": "production"
   }
