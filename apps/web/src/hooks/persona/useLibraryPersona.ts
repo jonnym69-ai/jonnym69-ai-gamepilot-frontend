@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { buildPersonaSnapshot, type PersonaSnapshot } from '../../../../../packages/identity-engine/src/persona'
+import { buildPersonaSnapshot, type PersonaSnapshot, type RawPlayerSignals } from '../../../../../packages/identity-engine/src/persona'
 import { useLibraryStore } from '../../stores/useLibraryStore'
 import { useCurrentMood } from '../useCurrentMood'
 
