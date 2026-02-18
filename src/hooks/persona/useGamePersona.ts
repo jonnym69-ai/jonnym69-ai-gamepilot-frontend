@@ -1,7 +1,13 @@
 import { useMemo } from 'react'
-import { buildPersonaSnapshot, type PersonaSnapshot } from '../../../../../packages/identity-engine/src/persona'
+// import { buildPersonaSnapshot, type PersonaSnapshot } from '../../../../../packages/identity-engine/src/persona'
 import { useLibraryStore } from '../../stores/useLibraryStore'
 import { useCurrentMood } from '../useCurrentMood'
+
+// Type definitions for now
+interface PersonaSnapshot {
+  signals: any
+  moodEntry: any
+}
 
 /**
  * Game-specific persona hook that computes persona snapshot for a single game
@@ -18,28 +24,28 @@ export function useGamePersona(gameId: string): PersonaSnapshot {
       
       if (!game) {
         console.warn(`Game ${gameId} not found in library`)
-        return buildPersonaSnapshot({
+        return {
           signals: createGameFallbackSignals(),
           moodEntry
-        })
+        }
       }
 
       // Derive RawPlayerSignals from single game data
       const rawSignals = deriveGamePlayerSignals(game)
       
       // Build persona snapshot with real mood data
-      return buildPersonaSnapshot({
+      return {
         signals: rawSignals,
         moodEntry
-      })
+      }
     } catch (error) {
       console.warn(`Game persona calculation failed for ${gameId}, using fallback:`, error)
       
       // Fallback to minimal persona snapshot
-      return buildPersonaSnapshot({
+      return {
         signals: createGameFallbackSignals(),
         moodEntry
-      })
+      }
     }
   }, [games, intelligence, gameId, moodEntry])
 }

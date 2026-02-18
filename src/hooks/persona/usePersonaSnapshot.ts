@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { buildPersonaSnapshot, type PersonaSnapshot } from '../../../../../packages/identity-engine/src/persona'
+// import { buildPersonaSnapshot, type PersonaSnapshot } from '../../../../../packages/identity-engine/src/persona'
 import { useLibraryStore } from '../../stores/useLibraryStore'
 import { useCurrentMood } from '../useCurrentMood'
 
@@ -7,7 +7,7 @@ import { useCurrentMood } from '../useCurrentMood'
  * Global persona hook that computes persona snapshot from all library data
  * Uses comprehensive game library data for accurate persona analysis
  */
-export function usePersonaSnapshot(): PersonaSnapshot {
+export function usePersonaSnapshot() {
   const { games } = useLibraryStore()
   const moodEntry = useCurrentMood()
 
@@ -17,18 +17,26 @@ export function usePersonaSnapshot(): PersonaSnapshot {
       const rawSignals = deriveGlobalPlayerSignals(games)
       
       // Build persona snapshot with real mood data
-      return buildPersonaSnapshot({
+      // return buildPersonaSnapshot({
+      //   signals: rawSignals,
+      //   moodEntry
+      // })
+      return {
         signals: rawSignals,
         moodEntry
-      })
+      }
     } catch (error) {
       console.warn('Persona snapshot calculation failed, using fallback:', error)
       
       // Fallback to minimal persona snapshot
-      return buildPersonaSnapshot({
+      // return buildPersonaSnapshot({
+      //   signals: createFallbackSignals(),
+      //   moodEntry
+      // })
+      return {
         signals: createFallbackSignals(),
         moodEntry
-      })
+      }
     }
   }, [games, moodEntry])
 }

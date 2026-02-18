@@ -1,7 +1,13 @@
 import { useMemo } from 'react'
-import { buildPersonaSnapshot, type PersonaSnapshot } from '../../../../../packages/identity-engine/src/persona'
+// import { buildPersonaSnapshot, type PersonaSnapshot } from '../../../../../packages/identity-engine/src/persona'
 import { useLibraryStore } from '../../stores/useLibraryStore'
 import { useCurrentMood } from '../useCurrentMood'
+
+// Type definitions for now
+interface PersonaSnapshot {
+  signals: any
+  moodEntry: any
+}
 
 /**
  * Library-scoped persona hook that computes persona snapshot from library context
