@@ -40,6 +40,7 @@
     "npm": ">=9.0.0"
   },
   "dependencies": {
+    "lucide-react": "^0.574.0",
     "node-fetch": "^3.3.2"
   }
 }
