@@ -1,0 +1,4 @@
+export { EnhancedPersonaEngine, createEnhancedPersonaEngine, type EnhancedPersonaSnapshot, type EnhancedPersonaConfig, DEFAULT_ENHANCED_CONFIG } from './enhancedPersonaIntegration';
+export { type MoodEvent, type SessionEvent, type RecommendationFeedback, type MoodPatternInsights, recordMoodEvent, recordSessionStart, recordSessionEnd, recordRecommendationFeedback, getTemporalMoodPatterns, getCompoundMoodSuggestions, getSessionMoodDelta, moodEventToUserMoodEntry, userMoodEntryToMoodEvent, validateMoodEvent, migrateMoodHistory, demigrateMoodHistory } from './enhancedPersonaEngine';
+export { buildPersonaSnapshot, createMinimalPersonaSnapshot, isHighConfidenceSnapshot, getSnapshotSummary, type PersonaSnapshot, type PersonaSnapshotInput } from './personaSnapshot';
+export { mapMoodToPersonaContext, createMoodState, isMoodRecent, getMoodIntensityCategory, type MoodState, type PersonaMoodContext } from './personaMoodMapping';

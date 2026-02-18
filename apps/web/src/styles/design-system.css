@@ -1,0 +1,1057 @@
+/* GamePilot Design System - Consolidated Style Tokens
+ * Single source of truth for all design tokens and utilities
+ */
+
+/* ===========================================
+   CSS CUSTOM PROPERTIES (DESIGN TOKENS)
+   =========================================== */
+
+/* Apply Solarpunk theme by default to avoid generic AI colors */
+:root {
+  /* Solarpunk Theme Colors (RGB for rgba() usage) */
+  --color-primary-rgb: 255, 140, 0;
+  --color-secondary-rgb: 100, 116, 139; /* Changed to warm grey-blue */
+  --color-accent-rgb: var(--custom-accent-rgb, 16, 185, 129);
+  --color-accent-light-rgb: 52, 211, 153;
+  
+  /* Enhanced Solarpunk Theme Colors */
+  --color-gaming-orange-rgb: 255, 152, 0;
+  --color-gaming-blue-rgb: 100, 116, 139; /* Changed to warm grey-blue */
+  --color-gaming-green-rgb: 16, 185, 129;
+  --color-gaming-cyan-rgb: 100, 116, 139; /* Changed to warm grey-blue */
+  --color-gaming-yellow-rgb: 255, 215, 0;
+  
+  /* Solarpunk Theme Colors (HEX for direct usage) */
+  --color-primary: #ff8c00;
+  --color-secondary: #64748b; /* Changed to warm grey-blue */
+  --color-accent: var(--custom-accent-color, #10b981);
+  --color-accent-light: #34d399;
+  
+  /* Enhanced Solarpunk Theme Colors */
+  --color-gaming-orange: #ff9800;
+  --color-gaming-blue: #64748b; /* Changed to warm grey-blue */
+  --color-gaming-green: #10b981;
+  --color-gaming-cyan: #64748b; /* Changed to warm grey-blue */
+  --color-gaming-yellow: #ffd700;
+  
+  /* Semantic Colors */
+  --color-success-rgb: 34, 197, 94;
+  --color-warning-rgb: 255, 191, 0; /* Changed to amber */
+  --color-error-rgb: 239, 68, 68;
+  --color-info-rgb: 59, 130, 246;
+  
+  --color-success: #22c55e;
+  --color-warning: #ffbf00; /* Changed to amber */
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  
+  /* Neutral Colors - Updated for Solarpunk theme */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #0a0a0a; /* Changed to charcoal/black */
+  
+  /* Solarpunk-specific background colors */
+  --color-gaming-dark: #0a0a0a; /* Charcoal/black */
+  --color-gaming-darker: #000000; /* Pure black */
+  
+  /* ===========================================
+     SPACING SYSTEM
+     =========================================== */
+  
+  --spacing-0: 0;
+  --spacing-px: 1px;
+  --spacing-0_5: 0.125rem;  /* 2px */
+  --spacing-1: 0.25rem;     /* 4px */
+  --spacing-1_5: 0.375rem;  /* 6px */
+  --spacing-2: 0.5rem;      /* 8px */
+  --spacing-2_5: 0.625rem;  /* 10px */
+  --spacing-3: 0.75rem;     /* 12px */
+  --spacing-3_5: 0.875rem;  /* 14px */
+  --spacing-4: 1rem;        /* 16px */
+  --spacing-5: 1.25rem;     /* 20px */
+  --spacing-6: 1.5rem;      /* 24px */
+  --spacing-7: 1.75rem;     /* 28px */
+  --spacing-8: 2rem;         /* 32px */
+  --spacing-9: 2.25rem;     /* 36px */
+  --spacing-10: 2.5rem;     /* 40px */
+  --spacing-11: 2.75rem;    /* 44px */
+  --spacing-12: 3rem;        /* 48px */
+  --spacing-14: 3.5rem;     /* 56px */
+  --spacing-16: 4rem;        /* 64px */
+  --spacing-20: 5rem;        /* 80px */
+  --spacing-24: 6rem;        /* 96px */
+  --spacing-28: 7rem;        /* 112px */
+  --spacing-32: 8rem;        /* 128px */
+  --spacing-36: 9rem;        /* 144px */
+  --spacing-40: 10rem;      /* 160px */
+  --spacing-44: 11rem;      /* 176px */
+  --spacing-48: 12rem;      /* 192px */
+  --spacing-52: 13rem;      /* 208px */
+  --spacing-56: 14rem;      /* 224px */
+  --spacing-60: 15rem;      /* 240px */
+  --spacing-64: 16rem;      /* 256px */
+  --spacing-72: 18rem;      /* 288px */
+  --spacing-80: 20rem;      /* 320px */
+  --spacing-96: 24rem;      /* 384px */
+  
+  /* ===========================================
+     TYPOGRAPHY SYSTEM
+     =========================================== */
+  
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --font-size-3xl: 1.875rem;   /* 30px */
+  --font-size-4xl: 2.25rem;    /* 36px */
+  --font-size-5xl: 3rem;       /* 48px */
+  --font-size-6xl: 3.75rem;    /* 60px */
+  --font-size-7xl: 4.5rem;     /* 72px */
+  --font-size-8xl: 6rem;       /* 96px */
+  --font-size-9xl: 8rem;       /* 128px */
+  
+  /* Font Weights */
+  --font-weight-thin: 100;
+  --font-weight-extralight: 200;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+  
+  /* Line Heights */
+  --line-height-none: 1;
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+  
+  /* Letter Spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
+  
+  /* ===========================================
+     BORDER RADIUS SYSTEM
+     =========================================== */
+  
+  --radius-none: 0;
+  --radius-sm: 0.125rem;      /* 2px */
+  --radius-base: 0.25rem;     /* 4px */
+  --radius-md: 0.375rem;      /* 6px */
+  --radius-lg: 0.5rem;        /* 8px */
+  --radius-xl: 0.75rem;       /* 12px */
+  --radius-2xl: 1rem;         /* 16px */
+  --radius-3xl: 1.5rem;       /* 24px */
+  --radius-full: 9999px;
+  
+  /* ===========================================
+     SHADOW SYSTEM
+     =========================================== */
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  
+  /* Gaming-specific shadows */
+  --shadow-cinematic: 0 8px 32px -8px rgba(var(--color-primary-rgb), 0.3);
+  --shadow-cinematic-epic: 0 20px 60px -12px rgba(var(--color-primary-rgb), 0.4);
+  --shadow-glow-primary: 0 0 20px rgba(var(--color-primary-rgb), 0.4);
+  --shadow-glow-secondary: 0 0 20px rgba(var(--color-secondary-rgb), 0.4);
+  --shadow-glow-accent: 0 0 20px rgba(var(--color-accent-rgb), 0.4);
+  --shadow-glow-success: 0 0 20px rgba(var(--color-success-rgb), 0.4);
+  --shadow-glow-warning: 0 0 20px rgba(var(--color-warning-rgb), 0.4);
+  --shadow-glow-error: 0 0 20px rgba(var(--color-error-rgb), 0.4);
+  --shadow-glow-info: 0 0 20px rgba(var(--color-info-rgb), 0.4);
+  
+  /* ===========================================
+     ANIMATION SYSTEM
+     =========================================== */
+  
+  /* Durations */
+  --duration-instant: 0ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
+  --duration-epic: 1000ms;
+  
+  /* Easing Functions */
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Gaming-specific easing */
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-sharp: cubic-bezier(0.4, 0, 0.6, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* ===========================================
+     TRANSFORM SYSTEM
+     =========================================== */
+  
+  /* Scale Values */
+  --scale-0: 0;
+  --scale-50: 0.5;
+  --scale-75: 0.75;
+  --scale-90: 0.9;
+  --scale-95: 0.95;
+  --scale-100: 1;
+  --scale-105: 1.05;
+  --scale-110: 1.1;
+  --scale-125: 1.25;
+  --scale-150: 1.5;
+  
+  /* Rotation Values */
+  --rotate-0: 0deg;
+  --rotate-1: 1deg;
+  --rotate-2: 2deg;
+  --rotate-3: 3deg;
+  --rotate-6: 6deg;
+  --rotate-12: 12deg;
+  --rotate-45: 45deg;
+  --rotate-90: 90deg;
+  --rotate-180: 180deg;
+  
+  /* Translate Values */
+  --translate-0: 0;
+  --translate-px: 1px;
+  --translate-0_5: 0.125rem;
+  --translate-1: 0.25rem;
+  --translate-1_5: 0.375rem;
+  --translate-2: 0.5rem;
+  --translate-2_5: 0.625rem;
+  --translate-3: 0.75rem;
+  --translate-3_5: 0.875rem;
+  --translate-4: 1rem;
+  --translate-5: 1.25rem;
+  --translate-6: 1.5rem;
+  --translate-7: 1.75rem;
+  --translate-8: 2rem;
+  --translate-9: 2.25rem;
+  --translate-10: 2.5rem;
+  --translate-11: 2.75rem;
+  --translate-12: 3rem;
+  --translate-14: 3.5rem;
+  --translate-16: 4rem;
+  --translate-20: 5rem;
+  --translate-24: 6rem;
+  --translate-28: 7rem;
+  --translate-32: 8rem;
+  --translate-36: 9rem;
+  --translate-40: 10rem;
+  --translate-44: 11rem;
+  --translate-48: 12rem;
+  --translate-52: 13rem;
+  --translate-56: 14rem;
+  --translate-60: 15rem;
+  --translate-64: 16rem;
+  --translate-72: 18rem;
+  --translate-80: 20rem;
+  --translate-96: 24rem;
+  
+  /* ===========================================
+     BLUR SYSTEM
+     =========================================== */
+  
+  --blur-none: 0;
+  --blur-sm: 4px;
+  --blur-base: 8px;
+  --blur-md: 12px;
+  --blur-lg: 16px;
+  --blur-xl: 24px;
+  --blur-2xl: 40px;
+  --blur-3xl: 64px;
+  
+  /* ===========================================
+     OPACITY SYSTEM
+     =========================================== */
+  
+  --opacity-0: 0;
+  --opacity-5: 0.05;
+  --opacity-10: 0.1;
+  --opacity-20: 0.2;
+  --opacity-25: 0.25;
+  --opacity-30: 0.3;
+  --opacity-40: 0.4;
+  --opacity-50: 0.5;
+  --opacity-60: 0.6;
+  --opacity-70: 0.7;
+  --opacity-75: 0.75;
+  --opacity-80: 0.8;
+  --opacity-90: 0.9;
+  --opacity-95: 0.95;
+  --opacity-100: 1;
+  
+  /* ===========================================
+     Z-INDEX SYSTEM
+     =========================================== */
+  
+  --z-index-auto: auto;
+  --z-index-0: 0;
+  --z-index-10: 10;
+  --z-index-20: 20;
+  --z-index-30: 30;
+  --z-index-40: 40;
+  --z-index-50: 50;
+  --z-index-modal: 1000;
+  --z-index-dropdown: 1050;
+  --z-index-sticky: 1100;
+  --z-index-fixed: 1200;
+  --z-index-overlay: 1300;
+  --z-index-tooltip: 1400;
+  --z-index-max: 2147483647;
+  
+  /* ===========================================
+     BREAKPOINT SYSTEM
+     =========================================== */
+  
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+  
+  /* ===========================================
+     CONTAINER SYSTEM
+     =========================================== */
+  
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1536px;
+}
+
+/* ===========================================
+   ANIMATION DELAY UTILITIES
+   =========================================== */
+
+.animate-delay-0 { animation-delay: 0ms; }
+.animate-delay-50 { animation-delay: 50ms; }
+.animate-delay-100 { animation-delay: 100ms; }
+.animate-delay-150 { animation-delay: 150ms; }
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-250 { animation-delay: 250ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+.animate-delay-350 { animation-delay: 350ms; }
+.animate-delay-400 { animation-delay: 400ms; }
+.animate-delay-450 { animation-delay: 450ms; }
+.animate-delay-500 { animation-delay: 500ms; }
+.animate-delay-600 { animation-delay: 600ms; }
+.animate-delay-700 { animation-delay: 700ms; }
+.animate-delay-800 { animation-delay: 800ms; }
+.animate-delay-900 { animation-delay: 900ms; }
+.animate-delay-1000 { animation-delay: 1000ms; }
+.animate-delay-1100 { animation-delay: 1100ms; }
+.animate-delay-1200 { animation-delay: 1200ms; }
+.animate-delay-1300 { animation-delay: 1300ms; }
+.animate-delay-1400 { animation-delay: 1400ms; }
+.animate-delay-1500 { animation-delay: 1500ms; }
+.animate-delay-1600 { animation-delay: 1600ms; }
+.animate-delay-1700 { animation-delay: 1700ms; }
+.animate-delay-1800 { animation-delay: 1800ms; }
+.animate-delay-1900 { animation-delay: 1900ms; }
+.animate-delay-2000 { animation-delay: 2000ms; }
+
+/* ===========================================
+   PROGRESS BAR UTILITIES
+   =========================================== */
+
+.progress-bar {
+  width: 100%;
+  height: var(--spacing-2);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  border-radius: var(--radius-full);
+  transition: width var(--duration-normal) var(--ease-out);
+  position: relative;
+}
+
+.progress-bar-fill-gaming {
+  height: 100%;
+  background: var(--bg-gradient-gaming);
+  border-radius: var(--radius-full);
+  transition: width var(--duration-normal) var(--ease-out);
+  position: relative;
+}
+
+.progress-bar-fill-accent {
+  height: 100%;
+  background: var(--bg-gradient-gaming-accent);
+  border-radius: var(--radius-full);
+  transition: width var(--duration-normal) var(--ease-out);
+  position: relative;
+}
+
+/* Progress bar sizes */
+.progress-bar-sm {
+  height: var(--spacing-1);
+}
+
+.progress-bar-md {
+  height: var(--spacing-2);
+}
+
+.progress-bar-lg {
+  height: var(--spacing-3);
+}
+
+.progress-bar-xl {
+  height: var(--spacing-4);
+}
+
+/* ===========================================
+   WIDTH UTILITIES FOR DYNAMIC VALUES
+   =========================================== */
+
+.w-0 { width: 0%; }
+.w-10 { width: 10%; }
+.w-20 { width: 20%; }
+.w-30 { width: 30%; }
+.w-40 { width: 40%; }
+.w-50 { width: 50%; }
+.w-60 { width: 60%; }
+.w-70 { width: 70%; }
+.w-80 { width: 80%; }
+.w-90 { width: 90%; }
+.w-100 { width: 100%; }
+
+/* ===========================================
+   SOLARPUNK THEME OVERRIDES
+   =========================================== */
+
+/* Apply Solarpunk background to body by default */
+body {
+  background: linear-gradient(135deg, var(--color-gaming-dark), var(--color-gaming-darker)) !important;
+}
+
+/* Override all gaming-dark backgrounds to use Solarpunk colors */
+.bg-gradient-to-br.from-gaming-dark {
+  background: linear-gradient(to bottom right, var(--color-gaming-dark), var(--color-gaming-darker)) !important;
+}
+
+.bg-gradient-to-br.from-gray-900 {
+  background: linear-gradient(to bottom right, var(--color-gaming-dark), var(--color-gaming-darker)) !important;
+}
+
+/* Override any remaining gray-900 backgrounds */
+.bg-gray-900 {
+  background-color: var(--color-gaming-dark) !important;
+}
+
+/* ===========================================
+   GAMING-SPECIFIC UTILITY CLASSES
+   =========================================== */
+
+/* Glass Morphism Effect */
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(var(--blur-base));
+  backdrop-filter: blur(var(--blur-base));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-morphism-dark {
+  background: rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(var(--blur-lg));
+  backdrop-filter: blur(var(--blur-lg));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-morphism-light {
+  background: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(var(--blur-sm));
+  backdrop-filter: blur(var(--blur-sm));
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Solarpunk Theme Classes */
+.text-gaming-primary {
+  color: var(--color-gaming-orange) !important;
+}
+
+.text-gaming-secondary {
+  color: var(--color-gaming-blue) !important;
+}
+
+.text-gaming-accent {
+  color: var(--color-gaming-green) !important;
+}
+
+.bg-gaming-primary {
+  background-color: var(--color-gaming-orange) !important;
+}
+
+.bg-gaming-secondary {
+  background-color: var(--color-gaming-blue) !important;
+}
+
+.bg-gaming-accent {
+  background-color: var(--color-gaming-green) !important;
+}
+
+.from-gaming-primary {
+  --tw-gradient-from: var(--color-gaming-orange) !important;
+}
+
+.to-gaming-secondary {
+  --tw-gradient-to: var(--color-gaming-blue) !important;
+}
+
+.from-gaming-accent {
+  --tw-gradient-from: var(--color-gaming-green) !important;
+}
+
+.to-gaming-accent {
+  --tw-gradient-to: var(--color-gaming-blue) !important;
+}
+
+.border-gaming-primary {
+  border-color: var(--color-gaming-orange) !important;
+}
+
+.border-gaming-secondary {
+  border-color: var(--color-gaming-blue) !important;
+}
+
+.border-gaming-accent {
+  border-color: var(--color-gaming-green) !important;
+}
+
+.shadow-gaming-primary {
+  box-shadow: 0 0 20px rgba(255, 152, 0, 0.3) !important;
+}
+
+.shadow-gaming-secondary {
+  box-shadow: 0 0 20px rgba(100, 116, 139, 0.3) !important;
+}
+
+.shadow-gaming-accent {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Gaming Color Classes */
+.bg-mode-solid {
+  background: var(--color-gaming-dark);
+}
+
+.bg-mode-gradient {
+  background: linear-gradient(135deg, var(--color-gaming-dark), var(--color-gaming-darker));
+}
+
+.bg-mode-image {
+  background: linear-gradient(135deg, rgba(10,10,10,0.8), rgba(0,0,0,0.6)), var(--custom-bg-image, url('/default-bg.jpg'));
+  background-size: cover;
+  background-position: center;
+}
+
+.bg-gradient-gaming-hero {
+  background: linear-gradient(135deg, 
+    var(--color-gaming-orange), 
+    var(--color-gaming-blue), 
+    var(--color-gaming-green)
+  );
+}
+
+/* Gaming Shadow Classes */
+.shadow-cinematic {
+  box-shadow: var(--shadow-cinematic);
+}
+
+.shadow-cinematic-epic {
+  box-shadow: var(--shadow-cinematic-epic);
+}
+
+.shadow-glow-primary {
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.shadow-glow-secondary {
+  box-shadow: var(--shadow-glow-secondary);
+}
+
+.shadow-glow-accent {
+  box-shadow: var(--shadow-glow-accent);
+}
+
+/* Gaming Animation Classes */
+.animate-gaming-bounce {
+  animation: gamingBounce var(--duration-slow) var(--ease-bounce);
+}
+
+.animate-gaming-pulse {
+  animation: gamingPulse 2s var(--ease-in-out) infinite;
+}
+
+.animate-gaming-glow {
+  animation: gamingGlow 2s var(--ease-in-out) infinite;
+}
+
+.animate-gaming-float {
+  animation: gamingFloat 3s var(--ease-in-out) infinite;
+}
+
+/* Gaming Transform Classes */
+.transform-gaming-hover {
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.transform-gaming-hover:hover {
+  transform: scale(var(--scale-105)) translateY(-2px);
+}
+
+.transform-gaming-active {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.transform-gaming-active:active {
+  transform: scale(var(--scale-95));
+}
+
+/* ===========================================
+   CONSISTENT TRANSITION CLASSES
+   =========================================== */
+
+.transition-all {
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.transition-transform {
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.transition-opacity {
+  transition: opacity var(--duration-normal) var(--ease-out);
+}
+
+.transition-colors {
+  transition: color var(--duration-normal) var(--ease-out),
+              background-color var(--duration-normal) var(--ease-out),
+              border-color var(--duration-normal) var(--ease-out);
+}
+
+.transition-shadow {
+  transition: box-shadow var(--duration-normal) var(--ease-out);
+}
+
+/* ===========================================
+   GAMING KEYFRAME ANIMATIONS
+   =========================================== */
+
+@keyframes gamingBounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -30px, 0) scaleY(1.1);
+  }
+  70% {
+    transform: translate3d(0, -15px, 0) scaleY(1.05);
+  }
+  90% {
+    transform: translate3d(0, -4px, 0) scaleY(1.02);
+  }
+}
+
+@keyframes gamingPulse {
+  0%, 100% {
+    transform: scale(var(--scale-100));
+    opacity: 1;
+  }
+  50% {
+    transform: scale(var(--scale-105));
+    opacity: var(--opacity-80);
+  }
+}
+
+@keyframes gamingGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(var(--color-primary-rgb), 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.8),
+                0 0 30px rgba(var(--color-primary-rgb), 0.6);
+  }
+}
+
+@keyframes gamingFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ===========================================
+   FOCUS AND ACCESSIBILITY
+   =========================================== */
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.focus-ring-gaming {
+  outline: none;
+}
+
+.focus-ring-gaming:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  box-shadow: var(--shadow-glow-accent);
+}
+
+/* ===========================================
+   RESPONSIVE DESIGN HELPERS
+   =========================================== */
+
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--spacing-4);
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: var(--container-sm);
+    padding: 0 var(--spacing-6);
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: var(--container-md);
+    padding: 0 var(--spacing-8);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: var(--container-lg);
+    padding: 0 var(--spacing-12);
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: var(--container-xl);
+    padding: 0 var(--spacing-16);
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: var(--container-2xl);
+    padding: 0 var(--spacing-20);
+  }
+}
+
+/* ===========================================
+   ENHANCED VISUAL EFFECTS & ANIMATIONS
+   =========================================== */
+
+/* Gaming-inspired animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(var(--color-primary-rgb), 0.8);
+  }
+}
+
+@keyframes float-animation {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Enhanced glass morphism effects */
+.glass-enhanced {
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Gaming gradient backgrounds */
+.gaming-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--color-gaming-purple),
+    var(--color-gaming-blue),
+    var(--color-gaming-cyan)
+  );
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+.gaming-gradient-subtle {
+  background: linear-gradient(
+    135deg,
+    rgba(var(--color-gaming-purple-rgb), 0.1),
+    rgba(var(--color-gaming-blue-rgb), 0.1),
+    rgba(var(--color-gaming-cyan-rgb), 0.1)
+  );
+}
+
+/* Neon glow effects */
+.neon-glow {
+  box-shadow: 
+    0 0 10px rgba(var(--color-primary-rgb), 0.8),
+    0 0 20px rgba(var(--color-primary-rgb), 0.6),
+    0 0 30px rgba(var(--color-primary-rgb), 0.4);
+}
+
+.neon-text {
+  text-shadow: 
+    0 0 10px rgba(var(--color-primary-rgb), 0.8),
+    0 0 20px rgba(var(--color-primary-rgb), 0.6),
+    0 0 30px rgba(var(--color-primary-rgb), 0.4);
+}
+
+/* Interactive hover effects */
+.hover-lift {
+  transition: transform var(--transition-200) var(--ease-out);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+.hover-scale {
+  transition: transform var(--transition-200) var(--ease-out);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-glow {
+  transition: box-shadow var(--transition-300) var(--ease-out);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 30px rgba(var(--color-accent-rgb), 0.6);
+}
+
+/* Shimmer loading effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Gaming card styles */
+.gaming-card {
+  background: var(--glass-enhanced);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  transition: all var(--transition-300) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.gaming-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.gaming-card:hover::before {
+  left: 100%;
+}
+
+.gaming-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 0 20px rgba(var(--color-accent-rgb), 0.3);
+}
+
+/* Enhanced button styles */
+.gaming-button {
+  background: var(--gaming-gradient);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4) var(--spacing-8);
+  color: white;
+  font-weight: var(--font-weight-semibold);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-300) var(--ease-out);
+}
+
+.gaming-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.gaming-button:hover::before {
+  left: 100%;
+}
+
+.gaming-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(var(--color-primary-rgb), 0.3);
+}
+
+/* Mood-based color classes */
+.mood-cozy {
+  background: linear-gradient(135deg, #ff6b6b, #feca57);
+}
+
+.mood-sweaty {
+  background: linear-gradient(135deg, #ff4757, #ff6348);
+}
+
+.mood-brainy {
+  background: linear-gradient(135deg, #3742fa, #5f27cd);
+}
+
+.mood-social {
+  background: linear-gradient(135deg, #00d2d3, #54a0ff);
+}
+
+.mood-creative {
+  background: linear-gradient(135deg, #f368e0, #ee5a24);
+}
+
+/* Performance optimizations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* ===========================================
+   REDUCED MOTION SUPPORT
+   =========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

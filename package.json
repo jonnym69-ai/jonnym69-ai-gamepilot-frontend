@@ -1,0 +1,45 @@
+{
+  "name": "gamepilot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GamePilot Monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:web": "npm run dev --workspace=gamepilot-web",
+    "dev:api": "npm run dev --workspace=gamepilot-api",
+    "build": "npm run build:packages && npm run build:apps",
+    "build:packages": "npm run build --workspace=@gamepilot/config --workspace=@gamepilot/identity-engine --workspace=@gamepilot/integrations --workspace=@gamepilot/shared --workspace=@gamepilot/static-data --workspace=@gamepilot/types",
+    "build:packages:all": "npm run build --workspaces --if-present",
+    "build:apps": "npm run build:api && npm run build:web",
+    "build:web": "npm run build --workspace=gamepilot-web",
+    "build:api": "npm run build --workspace=gamepilot-api",
+    "start": "npm run start --workspace=gamepilot-api",
+    "test": "npm test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "type-check": "npm run type-check --workspaces --if-present",
+    "clean": "concurrently \"rimraf node_modules\" \"npm run clean --workspaces --if-present\"",
+    "deploy:prod": "NODE_ENV=production npm run build && ./deploy.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.1",
+    "typescript": "^5.0.2"
+  },
+  "overrides": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

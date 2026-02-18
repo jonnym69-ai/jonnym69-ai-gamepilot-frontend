@@ -1,0 +1,10 @@
+export { buildPersonaSnapshot, createMinimalPersonaSnapshot, isHighConfidenceSnapshot, getSnapshotSummary, type PersonaSnapshotInput, type PersonaSnapshot } from './personaSnapshot';
+export { derivePersonaTraits, type RawPlayerSignals } from './traitExtractor';
+export { mapMoodToPersonaContext, createMoodState, isMoodRecent, getMoodIntensityCategory, type MoodState, type PersonaMoodContext } from './personaMoodMapping';
+export { buildPersonaNarrative, getNarrativeStyle, type NarrativeTone, type PersonaNarrativeInput, type PersonaNarrativeOutput } from './personaNarrative';
+export { personaEngine, buildPersonaSnapshotSafe, recordMoodEventSafe, startSessionSafe, endSessionSafe, recordFeedbackSafe, getPersonaEngineStatus, isEnhancedPersonaSnapshot, getEnhancedInsights, migrateLegacyMoodData, ENABLE_ENHANCED_PERSONA, type UnifiedPersonaEngine } from './safePersonaIntegration';
+export type { EnhancedPersonaSnapshot } from './enhancedPersona';
+export { usePersonaEngine, usePersonaSnapshot, useSessionTracking, useEnhancedPersonaDetection, usePersonaEngineFull, type UsePersonaEngineReturn, type UsePersonaSnapshotReturn, type UseSessionTrackingReturn } from './personaHooks';
+export { EnhancedPersonaEngine, createEnhancedPersonaEngine, type EnhancedPersonaConfig, DEFAULT_ENHANCED_CONFIG } from './enhancedPersonaIntegration';
+export { type MoodEvent, type SessionEvent, type RecommendationFeedback, type MoodPatternInsights, recordMoodEvent, recordSessionStart, recordSessionEnd, recordRecommendationFeedback, getTemporalMoodPatterns, getCompoundMoodSuggestions, getSessionMoodDelta, moodEventToUserMoodEntry, userMoodEntryToMoodEvent, validateMoodEvent, migrateMoodHistory, demigrateMoodHistory } from './enhancedPersonaEngine';
+export { type PersonaArchetypeId, type PersonaIntensity, type PersonaPacing, type PersonaRiskProfile, type PersonaSocialStyle, type PersonaTraits, type PersonaTraitUnion } from '../../../static-data/src/persona/personaTraits';

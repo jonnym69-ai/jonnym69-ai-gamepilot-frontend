@@ -1,0 +1,18 @@
+﻿{
+  "name": "@gamepilot/static-data",
+  "version": "1.0.0",
+  "description": "Static data definitions for GamePilot",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.2"
+  },
+  "files": [
+    "dist"
+  ]
+}

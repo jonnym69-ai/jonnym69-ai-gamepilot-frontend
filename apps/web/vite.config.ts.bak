@@ -1,0 +1,78 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    {
+      name: 'custom-middleware',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          // Don't interfere with Vite's internal routes
+          if (req.url && (
+            req.url.startsWith('/@') || // Vite HMR routes
+            req.url.startsWith('/node_modules') || // Node modules
+            req.url.startsWith('/src') || // Source files
+            req.url.includes('.') || // Files with extensions (CSS, JS, images, etc.)
+            req.url.startsWith('/api') // API routes
+          )) {
+            return next()
+          }
+          
+          // Handle client-side routing fallback for non-file, non-API routes
+          if (req.url && !req.url.startsWith('/api')) {
+            req.url = '/index.html'
+          }
+          next()
+        })
+      }
+    }
+  ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@shared': path.resolve(__dirname, '../../packages/shared/src'),
+      '@gamepilot/ui': path.resolve(__dirname, '../../packages/ui/src'),
+      '@gamepilot/types': path.resolve(__dirname, '../../packages/types/src'),
+      '@gamepilot/static-data': path.resolve(__dirname, '../../packages/static-data/src'),
+      '@gamepilot/integrations': path.resolve(__dirname, '../../packages/integrations/src'),
+    },
+    dedupe: ['react', 'react-dom'],
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+  },
+  optimizeDeps: {
+    include: ['@gamepilot/ui', 'react-router-dom'],
+  },
+  build: {
+    rollupOptions: {
+      external: [],
+      output: {
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      },
+    },
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
+    chunkSizeWarningLimit: 500, // Set to 500KB which is reasonable for modern apps
+    // Optimize assets during build
+    assetsInlineLimit: 4096, // Inline small assets (< 4KB)
+  },
+  server: {
+    host: true,
+    port: 3001, // Match backend port
+    strictPort: true, // FORCE this port or fail
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  },
+})

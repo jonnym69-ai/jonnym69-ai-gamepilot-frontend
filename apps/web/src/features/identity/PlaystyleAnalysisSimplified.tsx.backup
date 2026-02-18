@@ -1,0 +1,336 @@
+import React, { useState, useEffect, useMemo } from 'react'
+import type { Game, PlayStatus } from '@gamepilot/types'
+import { PlaystyleModel } from '@gamepilot/identity-engine/src/playstyleModel'
+import { PageErrorBoundary } from '../../components/ErrorBoundary'
+import { Loading } from '../../components/Loading'
+
+interface PlaystyleAnalysisProps {
+  games: Game[]
+}
+
+interface PlaystyleScores {
+  explorer: number
+  achiever: number
+  social: number
+  strategist: number
+  casual: number
+  competitive: number
+}
+
+interface PlaystyleInsight {
+  archetype: string
+  score: number
+  description: string
+  icon: string
+  color: string
+  recommendation: string
+}
+
+const PLAYSTYLE_ARCHETYPES = {
+  explorer: {
+    name: 'Explorer',
+    description: 'You love discovering new worlds and uncovering secrets',
+    icon: '🗺️',
+    color: '#10B981',
+    recommendation: 'Try open-world games with rich narratives'
+  },
+  achiever: {
+    name: 'Achiever',
+    description: 'You\'re driven by goals and completion',
+    icon: '🏆',
+    color: '#F59E0B',
+    recommendation: 'Focus on games with progression systems'
+  },
+  social: {
+    name: 'Social',
+    description: 'You enjoy cooperative and multiplayer experiences',
+    icon: '👥',
+    color: '#8B5CF6',
+    recommendation: 'Try co-op and party games'
+  },
+  strategist: {
+    name: 'Strategist',
+    description: 'You excel at planning and tactical thinking',
+    icon: '♟️',
+    color: '#3B82F6',
+    recommendation: 'Challenge yourself with strategy games'
+  },
+  casual: {
+    name: 'Casual',
+    description: 'You prefer relaxed, stress-free gaming experiences',
+    icon: '🌴',
+    color: '#22C55E',
+    recommendation: 'Try indie games and creative experiences'
+  },
+  competitive: {
+    name: 'Competitive',
+    description: 'You thrive on challenges and competition',
+    icon: '⚔️',
+    color: '#EF4444',
+    recommendation: 'Test your skills in ranked matches'
+  }
+}
+
+export const PlaystyleAnalysis: React.FC<PlaystyleAnalysisProps> = ({ games }) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const playstyleModel = new PlaystyleModel()
+
+  // Calculate playstyle scores based on games
+  const calculatePlaystyleScores = (): PlaystyleScores => {
+    const scores = {
+      explorer: 0,
+      achiever: 0,
+      social: 0,
+      strategist: 0,
+      casual: 0,
+      competitive: 0
+    }
+
+    games.forEach(game => {
+      // Explorer indicators
+      if (game.genres?.some(g => g.name.toLowerCase().includes('adventure')) || 
+          game.genres?.some(g => g.name.toLowerCase().includes('rpg')) || 
+          game.genres?.some(g => g.name.toLowerCase().includes('open-world')) ||
+          game.genres?.some(g => g.name.toLowerCase().includes('sandbox'))) {
+        scores.explorer += 1
+      }
+
+      // Achiever indicators
+      if (game.playStatus === 'completed' || 
+            (game.userRating && game.userRating >= 4) ||
+            (game.hoursPlayed && game.hoursPlayed > 50)) {
+          scores.achiever += 1
+        }
+
+      // Social indicators
+      if (game.genres?.some(g => g.name.toLowerCase().includes('multiplayer')) ||
+          game.genres?.some(g => g.name.toLowerCase().includes('mmo')) ||
+          game.genres?.some(g => g.name.toLowerCase().includes('party'))) {
+        scores.social += 1
+      }
+
+      // Strategist indicators
+      if (game.genres?.some(g => g.name.toLowerCase().includes('strategy')) ||
+          game.genres?.some(g => g.name.toLowerCase().includes('puzzle'))) {
+        scores.strategist += 1
+      }
+
+      // Casual indicators
+      if (game.genres?.some(g => g.name.toLowerCase().includes('casual')) ||
+          game.genres?.some(g => g.name.toLowerCase().includes('simulation')) ||
+          game.genres?.some(g => g.name.toLowerCase().includes('creative'))) {
+        scores.casual += 1
+      }
+
+      // Competitive indicators
+      if (game.genres?.some(g => g.name.toLowerCase().includes('action')) ||
+          game.genres?.some(g => g.name.toLowerCase().includes('shooter')) ||
+          game.genres?.some(g => g.name.toLowerCase().includes('fighting')) ||
+          game.genres?.some(g => g.name.toLowerCase().includes('racing'))) {
+        scores.competitive += 1
+      }
+    })
+
+    return scores
+  }
+
+  // Memoized scores
+  const scores = useMemo(() => calculatePlaystyleScores(), [games])
+
+  // Get playstyle insights
+  const playstyleInsights = useMemo((): PlaystyleInsight[] => {
+    const insights: PlaystyleInsight[] = []
+    const currentScores = scores
+
+    // Find dominant playstyle
+    const dominantPlaystyle = (Object.entries(currentScores) as [keyof PlaystyleScores, number][]).reduce((a, b) => 
+      currentScores[b[0]] > currentScores[a[0]] ? b : a
+    )[0]
+
+    const dominantData = PLAYSTYLE_ARCHETYPES[dominantPlaystyle]
+
+    // Add dominant playstyle insight
+    insights.push({
+      archetype: dominantData.name,
+      score: currentScores[dominantPlaystyle],
+      description: dominantData.description,
+      icon: dominantData.icon,
+      color: dominantData.color,
+      recommendation: dominantData.recommendation
+    })
+
+    // Add variety insight
+    const totalScore = Object.values(currentScores).reduce((sum, score) => sum + score, 0)
+    const varietyScore = Object.values(currentScores).filter(score => score > 0).length
+    
+    if (varietyScore >= 3) {
+      insights.push({
+        archetype: 'versatile',
+        score: varietyScore,
+        description: `You have ${varietyScore} different playstyles`,
+        icon: '🌈',
+        color: '#8B5CF6',
+        recommendation: 'Continue exploring diverse game genres'
+      })
+    }
+
+    // Add strengths insights
+    Object.entries(currentScores).forEach(([playstyle, score]) => {
+      if (score > 0) {
+        const data = PLAYSTYLE_ARCHETYPES[playstyle]
+        insights.push({
+          archetype: data.name,
+          score,
+          description: `You tend to be a strong ${data.name.toLowerCase()}`,
+          icon: data.icon,
+          color: data.color,
+          recommendation: data.recommendation
+        })
+      }
+    })
+
+    // Add improvement suggestions
+    if (currentScores.competitive < currentScores.strategist) {
+      insights.push({
+        archetype: 'improvement',
+        score: 'strategic',
+        description: 'Consider more strategy games to balance your playstyle',
+        icon: '🎯',
+        color: '#3B82F6',
+        recommendation: 'Try games that require planning and tactical thinking'
+      })
+    }
+
+    return insights
+  }, [scores])
+
+  if (isLoading) {
+    return (
+      <PageErrorBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-gaming-dark via-gray-900 to-gaming-darker flex items-center justify-center">
+          <Loading message="Analyzing your playstyle..." size="xl" />
+        </div>
+      </PageErrorBoundary>
+    )
+  }
+
+  if (error) {
+    return (
+      <PageErrorBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-gaming-dark via-gray-900 to-gaming-darker flex items-center justify-center">
+          <div className="glass-morphism rounded-xl p-8 max-w-md w-full border border-red-500/30">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🎮</div>
+              <h2 className="text-2xl font-bold text-white mb-4">Playstyle Analysis Error</h2>
+              <p className="text-gray-300 mb-6">{error}</p>
+              <button 
+                onClick={() => setError(null)}
+                className="px-6 py-2 bg-gaming-primary text-white rounded-lg hover:bg-gaming-primary/80"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </PageErrorBoundary>
+    )
+  }
+
+  return (
+    <PageErrorBoundary>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="glass-morphism rounded-xl border border-white/10 p-6">
+          <h2 className="text-2xl font-bold text-white mb-4">Your Gaming Playstyle</h2>
+          <div className="text-sm text-gray-400">
+            Analysis based on your game library and play patterns
+          </div>
+        </div>
+
+        {/* Playstyle Scores */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+          {Object.entries(scores).map(([playstyle, score]) => (
+            <div key={playstyle} className="glass-morphism rounded-lg p-4 border border-white/10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="text-3xl font-bold text-white">{(PLAYSTYLE_ARCHETYPES as any)[playstyle]?.icon || '🎮'}</div>
+                  <div className="flex-1">
+                    <div className="text-white font-medium">{(PLAYSTYLE_ARCHETYPES as any)[playstyle]?.name || playstyle}</div>
+                    <div className="text-sm text-gray-400 capitalize">{(PLAYSTYLE_ARCHETYPES as any)[playstyle]?.description || ''}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold" style={{ color: (PLAYSTYLE_ARCHETYPES as any)[playstyle]?.color || '#fff' }}>
+                    {score}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Playstyle Distribution Chart */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Playstyle Distribution</h3>
+          <div className="space-y-3">
+            {Object.entries(scores).map(([playstyle, score]) => (
+              <div key={playstyle} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3 flex-1">
+                  <div className="text-sm text-gray-400 min-w-[80px]">{(PLAYSTYLE_ARCHETYPES as any)[playstyle]?.name || playstyle}</div>
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="h-full bg-gradient-to-r from-transparent to-blue-500 rounded-full"
+                        style={{ width: `${score}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right text-sm text-gray-400 ml-3 min-w-[40px]">{score}%</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Playstyle Insights */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Gaming Insights</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {playstyleInsights.map((insight: any, index: number) => (
+              <div key={index} className="glass-morphism rounded-lg p-4 border border-white/10">
+                <div className="flex items-start space-x-3">
+                  <div className="text-2xl">{insight.icon}</div>
+                  <div className="flex-1">
+                    <div className="text-white font-medium mb-1">{insight.title}</div>
+                    <div className="text-sm text-gray-400 mb-2">{insight.description}</div>
+                    <div className="text-xs text-gray-500">{insight.recommendation}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Game Analysis Details */}
+        <div className="glass-morphism rounded-xl border border-white/10 p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Game Analysis</h3>
+          <div className="text-sm text-gray-400 mb-4">
+            Analysis based on your game library and play patterns
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {Object.entries(scores).map(([playstyle, count]) => (
+              <div key={playstyle} className="glass-morphism rounded-lg p-3 border border-white/10">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-400 capitalize">{playstyle}</div>
+                  <div className="text-right font-bold">{count}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </PageErrorBoundary>
+  )
+}

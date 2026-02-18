@@ -1,0 +1,779 @@
+import React, { useState } from 'react';
+import type { IdentitySnapshot } from '../utils/identityHistory';
+
+interface TimelineItemProps {
+  snapshot: IdentitySnapshot;
+  isExpanded: boolean;
+  onToggle: (id: string) => void;
+  onRegenerateCard: (snapshot: IdentitySnapshot) => void;
+  onDelete: (id: string) => void;
+}
+
+const TimelineItem: React.FC<TimelineItemProps> = ({
+  snapshot,
+  isExpanded,
+  onToggle,
+  onRegenerateCard,
+  onDelete
+}) => {
+  const date = new Date(snapshot.timestamp);
+  const formattedDate = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  const formattedTime = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+
+  // Mood icons mapping
+  const moodIcons: Record<string, string> = {
+    'chill': '😌',
+    'creative': '🎨',
+    'competitive': '⚔️',
+    'focused': '🎯',
+    'intense': '🔥',
+    'cozy': '🏠',
+    'exploration': '🗺️',
+    'puzzle': '🧩',
+    'social': '👥',
+    'immersive': '🌟',
+    'relaxed': '🧘',
+    'energetic': '⚡',
+    'strategic': '♟️',
+    'adventurous': '🚀',
+    'mysterious': '🌙',
+    'playful': '🎮'
+  };
+
+  // Session length icons
+  const sessionIcons: Record<string, string> = {
+    'short': '⏱️',
+    'medium': '⏰',
+    'long': '⏳'
+  };
+
+  // Play pattern icons
+  const patternIcons: Record<string, string> = {
+    'completionist': '🏆',
+    'explorer': '🗺️',
+    'strategist': '♟️',
+    'social': '👥',
+    'casual': '😊',
+    'competitive': '⚔️',
+    'collector': '💎',
+    'speedrunner': '⚡'
+  };
+
+  // Time of day icons
+  const timeIcons: Record<string, string> = {
+    'morning': '🌅',
+    'afternoon': '☀️',
+    'evening': '🌆',
+    'late-night': '🌙'
+  };
+
+  return (
+    <div className="timeline-item">
+      {/* Timeline dot */}
+      <div className="timeline-dot">
+        <div className="timeline-dot-inner" />
+      </div>
+
+      {/* Content */}
+      <div className="timeline-content">
+        {/* Header */}
+        <div className="timeline-header">
+          <div className="timeline-date">
+            <div className="timeline-date-text">{formattedDate}</div>
+            <div className="timeline-time-text">{formattedTime}</div>
+          </div>
+          <div className="timeline-actions">
+            <button
+              onClick={() => onToggle(snapshot.id)}
+              className="timeline-expand-btn"
+              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+            >
+              {isExpanded ? '−' : '+'}
+            </button>
+            <button
+              onClick={() => onRegenerateCard(snapshot)}
+              className="timeline-regenerate-btn"
+              aria-label="Regenerate card from this snapshot"
+            >
+              🎴
+            </button>
+            <button
+              onClick={() => onDelete(snapshot.id)}
+              className="timeline-delete-btn"
+              aria-label="Delete snapshot"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        {/* Compact View */}
+        {!isExpanded && (
+          <div className="timeline-compact">
+            <div className="timeline-compact-moods">
+              {snapshot.dominantMoods.slice(0, 3).map(mood => (
+                <span key={mood} className="timeline-mood-tag">
+                  {moodIcons[mood.toLowerCase()] || '🎮'}
+                  {mood}
+                </span>
+              ))}
+            </div>
+            <div className="timeline-compact-details">
+              <span className="timeline-compact-session">
+                {sessionIcons[snapshot.preferredSessionLength]} {snapshot.preferredSessionLength}
+              </span>
+              <span className="timeline-compact-time">
+                {snapshot.preferredTimesOfDay.map(time => timeIcons[time.toLowerCase()] || '🌅').join(' ')}
+              </span>
+            </div>
+            <p className="timeline-compact-narrative">
+              {snapshot.shortNarrative}
+            </p>
+          </div>
+        )}
+
+  {/* Expanded View */}
+{isExpanded && (
+  <div className="timeline-expanded">
+    {/* Full Details */}
+    <div className="timeline-expanded-details">
+
+      <div className="timeline-section">
+        <h4>Gaming Moods</h4>
+        <div className="timeline-moods-grid">
+          {snapshot.dominantMoods.map(mood => (
+            <div key={mood} className="timeline-mood-item">
+              <span className="timeline-mood-icon">
+                {moodIcons[mood.toLowerCase()] || '🎮'}
+              </span>
+              <span>{mood}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="timeline-section">
+        <h4>Gaming Preferences</h4>
+        <div className="timeline-preferences-grid">
+
+          <div className="timeline-preference-item">
+            <span className="timeline-preference-icon">
+              {sessionIcons[snapshot.preferredSessionLength]}
+            </span>
+            <div>
+              <div className="timeline-preference-label">Session Length</div>
+              <div className="timeline-preference-value">
+                {snapshot.preferredSessionLength}
+              </div>
+            </div>
+          </div>
+
+          <div className="timeline-preference-item">
+            <span className="timeline-preference-icon">
+              {snapshot.preferredTimesOfDay
+                .map(time => timeIcons[time.toLowerCase()] || '🌅')
+                .join(' ')}
+            </span>
+            <div>
+              <div className="timeline-preference-label">Peak Times</div>
+              <div className="timeline-preference-value">
+                {snapshot.preferredTimesOfDay.join(', ')}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div className="timeline-section">
+        <h4>Play Style</h4>
+        <div className="timeline-patterns-grid">
+          {snapshot.recentPlayPatterns.map(pattern => (
+            <div key={pattern} className="timeline-pattern-item">
+              <span className="timeline-pattern-icon">
+                {patternIcons[pattern.toLowerCase()] || '🎮'}
+              </span>
+              <span>{pattern}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="timeline-section">
+        <h4>Gaming Stats</h4>
+        <div className="timeline-stats-grid">
+
+          <div className="timeline-stat-item">
+            <div className="timeline-stat-label">Completion Rate</div>
+            <div className="timeline-stat-value">
+              {Math.round(snapshot.completionRate * 100)}%
+            </div>
+          </div>
+
+          <div className="timeline-stat-item">
+            <div className="timeline-stat-label">Social Gaming</div>
+            <div className="timeline-stat-value">
+              {Math.round(snapshot.multiplayerRatio * 100)}%
+            </div>
+          </div>
+
+          <div className="timeline-stat-item">
+            <div className="timeline-stat-label">Avg Session</div>
+            <div className="timeline-stat-value">
+              {Math.round(snapshot.averageSessionLengthMinutes)} min
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div className="timeline-section">
+        <h4>Top Games</h4>
+        <div className="timeline-games-list">
+          {snapshot.topIdentityGames.map((game, index) => (
+            <div key={game.id} className="timeline-game-item">
+              <div className="timeline-game-rank">#{index + 1}</div>
+              <div className="timeline-game-info">
+                <div className="timeline-game-title">{game.title}</div>
+                <div className="timeline-game-score">
+                  Score: {game.score.toFixed(1)}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Full Narrative */}
+      {snapshot.fullNarrative && (
+        <div className="timeline-section">
+          <h4>Full Story</h4>
+          <div className="timeline-full-narrative">
+            <p>{snapshot.fullNarrative}</p>
+          </div>
+        </div>
+      )}
+
+    </div>
+  </div>
+)}
+
+interface TimelineProps {
+  snapshots: IdentitySnapshot[];
+  onRegenerateCard: (snapshot: IdentitySnapshot) => void;
+  onDelete: (id: string) => void;
+}
+
+export const IdentityTimeline: React.FC<TimelineProps> = ({
+  snapshots,
+  onRegenerateCard,
+  onDelete
+}) => {
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  const handleToggle = (id: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleRegenerateCard = (snapshot: IdentitySnapshot) => {
+    // Create a temporary persona context from the snapshot
+    const tempPersonaContext = {
+      dominantMoods: snapshot.dominantMoods,
+      preferredSessionLength: snapshot.preferredSessionLength as any,
+      preferredTimesOfDay: snapshot.preferredTimesOfDay as any,
+      recentPlayPatterns: snapshot.recentPlayPatterns,
+      moodAffinity: {},
+      averageSessionLengthMinutes: snapshot.averageSessionLengthMinutes,
+      lateNightRatio: 0,
+      completionRate: snapshot.completionRate,
+      multiplayerRatio: snapshot.multiplayerRatio
+    };
+
+    // Create temporary games from snapshot
+    const tempGames = snapshot.topIdentityGames.map(game => ({
+      id: game.id,
+      title: game.title,
+      moods: [],
+      genres: [],
+      hoursPlayed: 0,
+      sessionLength: snapshot.preferredSessionLength as any,
+      recommendedTimes: snapshot.preferredTimesOfDay as any,
+      score: game.score
+    }));
+
+    // Trigger card generation with snapshot data
+    const event = new CustomEvent('generate-card-from-snapshot', {
+      detail: {
+        personaContext: tempPersonaContext,
+        identityDefiningGames: tempGames,
+        identityNarrative: snapshot.shortNarrative,
+        fullNarrative: snapshot.fullNarrative
+      }
+    });
+    
+    window.dispatchEvent(event);
+  };
+
+  if (snapshots.length === 0) {
+    return (
+      <div className="identity-history-empty">
+        <div className="empty-state-icon">🕰️</div>
+        <h3>No History Yet</h3>
+        <p>Your gaming identity journey will be captured here over time.</p>
+        <p>Continue playing and generating identity cards to build your timeline.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="identity-history">
+      <div className="identity-history-header">
+        <h2>Your Evolution</h2>
+        <div className="identity-history-stats">
+          <div className="history-stat">
+            <div className="history-stat-number">{snapshots.length}</div>
+            <div className="history-stat-label">Snapshots</div>
+          </div>
+          {snapshots.length > 1 && (
+            <div className="history-stat">
+              <div className="history-stat-number">
+                {snapshots.length > 1 ? 
+                  Math.round((snapshots[0].timestamp ? 
+                    (new Date().getTime() - new Date(snapshots[0].timestamp).getTime()) / 
+                    (1000 * 60 * 60 * 24) 
+                  : 0)) : 0
+                }
+              </div>
+              <div className="history-stat-label">Days Ago</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="timeline">
+        {snapshots.map((snapshot, index) => (
+          <TimelineItem
+            key={snapshot.id}
+            snapshot={snapshot}
+            isExpanded={expandedItems.has(snapshot.id)}
+            onToggle={handleToggle}
+            onRegenerateCard={handleRegenerateCard}
+            onDelete={onDelete}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Add CSS styles
+const style = document.createElement('style');
+style.textContent = `
+.identity-history {
+  margin: 2rem 0;
+}
+
+.identity-history-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.identity-history-header h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.identity-history-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.history-stat {
+  text-align: center;
+}
+
+.history-stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #8b5cf6;
+}
+
+.history-stat-label {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #4b5563, #374151);
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 2rem;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -2rem;
+  top: 0;
+  width: 1rem;
+  height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.timeline-dot-inner {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: #8b5cf6;
+  border: 2px solid #1e293b;
+  transition: all 0.2s ease;
+}
+
+.timeline-item:hover .timeline-dot-inner {
+  background: #3b82f6;
+  transform: scale(1.2);
+}
+
+.timeline-content {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-left: 1rem;
+  transition: all 0.3s ease;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.timeline-date {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-date-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.timeline-time-text {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.timeline-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.timeline-expand-btn,
+.timeline-regenerate-btn,
+.timeline-delete-btn {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #e5e7eb;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timeline-expand-btn:hover,
+.timeline-regenerate-btn:hover,
+.timeline-delete-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.timeline-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+.timeline-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.timeline-compact-moods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.timeline-mood-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(139, 92, 246, 0.2);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  color: #a78bfa;
+}
+
+.timeline-compact-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.timeline-compact-session,
+.timeline-compact-time {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.timeline-compact-narrative {
+  font-size: 0.875rem;
+  color: #d1d5db;
+  line-height: 1.4;
+  font-style: italic;
+  margin: 0;
+}
+
+.timeline-expanded {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.timeline-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1rem;
+}
+
+.timeline-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin-bottom: 0.75rem;
+}
+
+.timeline-moods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.timeline-mood-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #a78bfa;
+}
+
+.timeline-mood-icon {
+  font-size: 1rem;
+}
+
+.timeline-preferences-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.timeline-preference-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: 0.5rem;
+}
+
+.timeline-preference-icon {
+  font-size: 1.25rem;
+}
+
+.timeline-preference-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timeline-preference-value {
+  font-size: 0.875rem;
+  color: #e5e7eb;
+  font-weight: 500;
+}
+
+.timeline-patterns-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.timeline-pattern-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #a78bfa;
+}
+
+.timeline-pattern-icon {
+  font-size: 1rem;
+}
+
+.timeline-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 1rem;
+}
+
+.timeline-stat-item {
+  text-align: center;
+  padding: 0.75rem;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 0.5rem;
+}
+
+.timeline-stat-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-stat-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.timeline-games-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.timeline-game-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(55, 65, 81, 0.1);
+  border-radius: 0.5rem;
+}
+
+.timeline-game-rank {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f59e0b;
+  min-width: 2rem;
+}
+
+.timeline-game-info {
+  flex: 1;
+}
+
+.timeline-game-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #e5e7eb;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-game-score {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.timeline-full-narrative {
+  font-size: 0.875rem;
+  color: #d1d5db;
+  line-height: 1.5;
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 0;
+}
+
+.identity-history-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.identity-history-empty h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin-bottom: 0.5rem;
+}
+
+.identity-history-empty p {
+  color: #9ca3af;
+  line-height: 1.5;
+  max-width: 400px;
+  margin: 0 auto 0.5rem;
+}
+`;
+
+document.head.appendChild(style);

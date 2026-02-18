@@ -1,0 +1,10 @@
+/* Micro-interactions & Polish - DEPRECATED
+ * This file is deprecated. Use design-system.css instead.
+ * All micro-interactions have been consolidated into the design system.
+ */
+
+/* Import the new design system */
+@import './design-system.css';
+
+/* Legacy micro-interaction classes - use design system classes instead */
+/* This file exists for backward compatibility only */

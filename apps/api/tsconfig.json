@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@gamepilot/shared": ["../../packages/shared/dist"],
+      "@gamepilot/shared/*": ["../../packages/shared/dist/*"],
+      "@gamepilot/static-data/*": ["../../packages/static-data/dist/*"],
+      "@gamepilot/identity-engine/*": ["../../packages/identity-engine/dist/*"],
+      "@gamepilot/types/*": ["../../packages/types/dist/*"],
+      "@gamepilot/integrations/*": ["../../packages/integrations/dist/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "src/monitoring/**/*"]
+}

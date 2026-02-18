@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "apps/api/src/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "apps/web/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist",
+        "buildCommand": "npm run build:web"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "apps/web/package.json",
+      "dest": "/",
+      "handle": "filesystem"
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "@api_url",
+    "VITE_ENABLE_STEAM_INTEGRATION": "true",
+    "VITE_ENABLE_DISCORD_INTEGRATION": "true",
+    "VITE_ENABLE_YOUTUBE_INTEGRATION": "true",
+    "VITE_ENABLE_MOOD_ANALYSIS": "true",
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "apps/api/src/index.ts": {
+      "maxDuration": 10000
+    }
+  }
+}

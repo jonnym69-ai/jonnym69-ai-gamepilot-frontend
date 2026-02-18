@@ -1,0 +1,13 @@
+export * from './types';
+export * from './moodModel';
+export * from './playstyleModel';
+export * from './recommendations';
+export * from './computeIdentity';
+export { type MoodForecast, type MoodForecastingResult, calculateMoodForecast } from './mood/moodForecast';
+export { type MoodGameRecommendation, type MoodBasedRecommendationResult, generateMoodBasedRecommendations } from './recommendation/moodGameRecommendations';
+export * from './freeAIComponents';
+export { IdentityEngine } from './computeIdentity';
+export { MoodModel, MoodStrategy, moodStrategy } from './moodModel';
+export { PlaystyleModel, PLAYSTYLE_ARCHETYPES, calculatePlaystyleScores, getPlaystyleInsights, type PlaystyleScores } from './playstyleModel';
+export { RecommendationEngine } from './recommendations';
+export { FreeAIEngine, FreeMoodEngine, FreeRecommendationEngine, FreeVectorSearch, MoodRecommendationMapper, SessionAnalyzer } from './freeAIComponents';

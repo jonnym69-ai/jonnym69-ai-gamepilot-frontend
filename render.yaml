@@ -1,0 +1,24 @@
+services:
+  # GamePilot API Service
+  - type: web
+    name: gamepilot-api
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm run start:port
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        value: file:./data/gamepilot.db
+      - key: CORS_ORIGIN
+        value: https://gamepilot-v2.netlify.app
+    disk:
+      name: gamepilot-data
+      mountPath: /app/data
+      sizeGB: 1

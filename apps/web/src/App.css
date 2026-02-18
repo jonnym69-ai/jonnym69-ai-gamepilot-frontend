@@ -1,0 +1,70 @@
+/* eslint-disable tailwindcss/no-custom-classname */
+/* tailwindcss ignore */
+/* csslint ignore:start */
+
+@import url('./styles/design-system.css');
+@import url('./styles/animations.css');
+@import url('./styles/theme.css');
+@import url('./styles/skeleton.css');
+
+@tailwind base;
+/* eslint-disable-next-line @tailwindcss/no-custom-classname */
+@tailwind components;
+/* eslint-disable-next-line @tailwindcss/no-custom-classname */
+@tailwind utilities;
+/* csslint ignore:end */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    /* csslint ignore:start */
+    @apply bg-gray-900 text-gray-100 antialiased;
+    /* csslint ignore:end */
+  }
+}
+
+@layer components {
+  /* These components are now handled by the design system */
+  /* Keeping only unique styles not covered by design-system.css */
+  
+  .accent-gradient {
+    /* csslint ignore:start */
+    @apply bg-gradient-to-r from-purple-600 to-blue-600;
+    /* csslint ignore:end */
+  }
+  
+  .cinematic-shadow {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Optimized image performance styles */
+  .optimized-image {
+    image-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    will-change: opacity;
+  }
+
+  /* Analytics component styles */
+  .analytics-bar-fill {
+    transition: all 0.3s ease;
+    background-color: var(--bar-color);
+  }
+
+  .analytics-legend-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background-color: var(--dot-color);
+  }
+
+  .analytics-chart-bar {
+    transition: all 0.3s ease;
+    height: var(--bar-height);
+  }
+}

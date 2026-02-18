@@ -1,0 +1,20 @@
+﻿{
+  "name": "@gamepilot/types",
+  "version": "1.0.0",
+  "description": "Type definitions for GamePilot",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gamepilot/static-data": "file:../static-data"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.2"
+  }
+}

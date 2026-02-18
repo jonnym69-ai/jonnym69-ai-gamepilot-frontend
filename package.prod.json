@@ -1,0 +1,36 @@
+{
+  "name": "gamepilot-production",
+  "version": "1.0.0",
+  "description": "GamePilot Production Deployment Scripts",
+  "scripts": {
+    "deploy": "node deploy.js",
+    "deploy:prod": "NODE_ENV=production node deploy.js",
+    "rollback": "node deploy.js rollback",
+    "status": "node deploy.js status",
+    "health": "node deploy.js health",
+    "cleanup": "node deploy.js cleanup",
+    "backup": "node deploy.js backup",
+    "list-backups": "node deploy.js list",
+    "start:prod": "cd apps/api && NODE_ENV=production node src/production-server.ts",
+    "start:prod:api": "cd apps/api && NODE_ENV=production node src/production-server.ts",
+    "start:prod:web": "cd apps/web && NODE_ENV=production npm run preview",
+    "build:prod": "npm run build:prod:api && npm run build:prod:web",
+    "build:prod:api": "cd apps/api && npm run build",
+    "build:prod:web": "cd apps/web && npm run build",
+    "migrate:prod": "cd apps/api && NODE_ENV=production npm run migrate",
+    "test:prod": "npm run test:prod:api && npm run test:prod:web",
+    "test:prod:api": "cd apps/api && NODE_ENV=production npm test",
+    "test:prod:web": "cd apps/web && NODE_ENV=production npm run test",
+    "logs": "tail -f logs/api.log logs/web.log",
+    "logs:api": "tail -f logs/api.log",
+    "logs:web": "tail -f logs/web.log"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "pm2": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

@@ -1,0 +1,21 @@
+﻿{
+  "name": "@gamepilot/shared",
+  "version": "1.0.0",
+  "description": "Shared types and utilities for GamePilot",
+  "main": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gamepilot/static-data": "file:../static-data",
+    "@gamepilot/types": "file:../types",
+    "zod": "^3.22.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "typescript": "^5.0.2"
+  }
+}

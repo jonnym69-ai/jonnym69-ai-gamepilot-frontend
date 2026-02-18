@@ -1,0 +1,430 @@
+import { create } from 'zustand'
+import { Game } from '../types'
+import { toast } from '../components/Toast'
+import { SteamAPI } from '../services/steamApi'
+import { launcherService } from '../services/launcherService'
+import { personaEngineService } from '../services/personaEngineService'
+import { gameApiService } from '../services/gameApiService'
+import { SteamGame } from '@gamepilot/shared/models/gameExtensions'
+
+const importSteamLibrary = async (steamId: string, apiKey: string) => {
+  const { setIsLoading } = useLibraryStore.getState()
+  const { setGames } = useLibraryStore.getState().actions
+  let games: Game[] = []
+
+  try {
+    setIsLoading(true)
+    console.log('🔍 useLibraryStore: Calling SteamAPI.getOwnedGames with:', { steamId, apiKey })
+    const steamGames = await SteamAPI.getOwnedGames(steamId, apiKey)
+    console.log('🔍 useLibraryStore: SteamAPI returned:', steamGames)
+    console.log('🔍 useLibraryStore: Number of games from Steam API:', steamGames.length)
+
+    // Process games for database upsert
+    const gamesForUpsert = steamGames.map(game => {
+      const coverImage = game.img_logo_url
+        ? `https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_logo_url}.jpg`
+        : game.img_icon_url
+          ? `https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`
+          : ''
+
+      return {
+        appId: game.appid,
+        title: game.name,
+        description: undefined,
+        coverImage,
+        genres: [],
+        subgenres: [],
+        platforms: [{ id: 'steam', name: 'Steam', code: 'steam' as any, isConnected: true }],
+        emotionalTags: [],
+        playStatus: 'backlog',
+        hoursPlayed: Math.floor(game.playtime_forever / 60),
+        addedAt: new Date().toISOString(),
+        isFavorite: false,
+        tags: [],
+        releaseYear: new Date().getFullYear()
+      }
+    })
+
+    console.log('🔍 useLibraryStore: Upserting games to database:', gamesForUpsert.length)
+    
+    // Upsert games to database
+    const upsertResult = await gameApiService.upsertGames(gamesForUpsert)
+    
+    if (upsertResult.success && upsertResult.data) {
+      // Use database games with proper IDs
+      games = upsertResult.data.games.map(dbGame => ({
+        ...dbGame,
+        appId: dbGame.appId || (dbGame as any).appId // Ensure appId is preserved
+      }))
+      
+      console.log('🔍 useLibraryStore: Successfully upserted games:', games.length)
+      console.log('🔍 useLibraryStore: First database game example:', games[0])
+    } else {
+      throw new Error(upsertResult.error || 'Failed to upsert games to database')
+    }
+
+    return {
+      success: games.length > 0,
+      gameCount: games.length,
+      games
+    }
+  } catch (error) {
+    console.error('🔍 useLibraryStore: Steam import failed:', error)
+    return {
+      success: false,
+      gameCount: 0,
+      games: []
+    }
+  } finally {
+    setIsLoading(false)
+    if (games.length > 0) {
+      console.log('🔍 useLibraryStore: Setting games in store:', games.length)
+      setGames(games)
+    }
+  }
+}
+
+interface LibraryStore {
+  games: Game[]
+  currentSession: { gameId: string; startedAt: number } | null
+  isLoading: boolean
+  hasLoaded: boolean
+  filters: {
+    genre: string | null
+    platform: string | null
+    status: string | null
+    search: string
+  }
+  intelligence: {
+    selectedMood: string
+    selectedSessionLength: string
+    selectedGenres: string[]
+    selectedSorting: string
+    preferredGenres: string[]
+    preferredMoods: []
+    preferredSessionStyle: string | null
+  }
+  actions: any
+  setIntelligenceState: (partial: Partial<LibraryStore['intelligence']>) => void
+  setIsLoading: (loading: boolean) => void
+  setHasLoaded: (hasLoaded: boolean) => void
+  setGames: (games: Game[]) => void
+}
+
+export const useLibraryStore = create<LibraryStore>()((set, get) => ({
+  games: [],
+  currentSession: null,
+  isLoading: false,
+  hasLoaded: false,
+
+  filters: {
+    genre: null,
+    platform: null,
+    status: null,
+    search: ''
+  },
+
+  intelligence: {
+    selectedMood: '',
+    selectedSessionLength: '',
+    selectedGenres: [],
+    selectedSorting: '',
+    preferredGenres: [],
+    preferredMoods: [],
+    preferredSessionStyle: null
+  },
+
+  setIsLoading: (loading: boolean) => set({ isLoading: loading }),
+  setHasLoaded: (hasLoaded: boolean) => set({ hasLoaded }),
+  setGames: (games: Game[]) => set({ games, hasLoaded: true }),
+
+  actions: {
+    addGame: (game: Game) => {
+      set(state => {
+        // Check if game already exists by ID or appId
+        const existingById = state.games.find(g => g.id === game.id)
+        const existingByAppId = state.games.find(g => (g as any).appId === (game as any).appId)
+        
+        if (existingById || existingByAppId) {
+          // Game already exists, don't add duplicate
+          return state
+        }
+        
+        return { games: [...state.games, game] }
+      })
+      toast.success(`Added ${game.title} to your library`)
+    },
+
+    removeGame: (gameId: string) => {
+      set(state => ({ games: state.games.filter(g => g.id !== gameId) }))
+      toast.info('Game removed from library')
+    },
+
+    updateGame: (gameId: string, updates: Partial<Game>) => {
+      set(state => ({
+        games: state.games.map(g => (g.id === gameId ? { ...g, ...updates } : g))
+      }))
+    },
+
+    bulkUpdateStatus: (gameIds: string[], status: string) => {
+      set(state => ({
+        games: state.games.map(g =>
+          gameIds.includes(g.id) ? { ...g, playStatus: status as any } : g
+        )
+      }))
+      toast.success(`Updated ${gameIds.length} games`)
+    },
+
+    bulkExport: () => {
+      const data = JSON.stringify(get().games, null, 2)
+      const blob = new Blob([data], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'game-library.json'
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('Library exported successfully')
+    },
+
+    bulkImport: (games: Omit<Game, 'id'>[]) => {
+      const newGames = games.map(g => ({
+        ...g,
+        id: crypto.randomUUID(),
+        addedAt: new Date()
+      }))
+
+      set(state => ({ games: [...state.games, ...newGames] }))
+      toast.success(`Imported ${newGames.length} games`)
+    },
+
+    importSteamLibrary,
+
+    bulkAddToCategory: (gameIds: string[], category: string) => {
+      set(state => ({
+        games: state.games.map(g =>
+          gameIds.includes(g.id)
+            ? { ...g, tags: Array.from(new Set([...(g.tags || []), category])) }
+            : g
+        )
+      }))
+      toast.success(`Added ${gameIds.length} games to ${category}`)
+    },
+
+    deduplicateGames: () => {
+      set(state => {
+        const unique = state.games.filter(
+          (g, i, arr) =>
+            i === arr.findIndex(x => x.title.toLowerCase() === g.title.toLowerCase())
+        )
+        return { games: unique }
+      })
+    },
+
+    bulkDelete: (gameIds: string[]) => {
+      set(state => ({ games: state.games.filter(g => !gameIds.includes(g.id)) }))
+      toast.success(`Deleted ${gameIds.length} games`)
+    },
+
+    launchGame: async (gameId: string) => {
+      const game = get().games.find(g => g.id === gameId)
+      if (!game) return
+
+      // Get platform code for the game
+      const steamPlatform = game.platforms.find(p => p.code === 'steam')
+      const platformCode = steamPlatform ? 'steam' : undefined
+
+      try {
+        // Use persona engine service for enhanced tracking
+        const result = await personaEngineService.launchGameWithPersonaTracking(gameId, game)
+        
+        if (result.success && result.data) {
+          set({
+            currentSession: {
+              gameId: game.id,
+              startedAt: Date.now()
+            }
+          })
+        }
+      } catch (error) {
+        console.error('Failed to launch game:', error)
+        
+        // Fallback to basic launcher service
+        try {
+          const result = await launcherService.launchGame(gameId, platformCode)
+          
+          if (result.success && result.data) {
+            set({
+              currentSession: {
+                gameId: game.id,
+                startedAt: Date.now()
+              }
+            })
+          }
+        } catch (fallbackError) {
+          console.error('Fallback launch also failed:', fallbackError)
+        }
+      }
+    },
+
+    endCurrentSession: async () => {
+      const state = get()
+      if (!state.currentSession) return
+
+      try {
+        // Use persona engine service for enhanced tracking
+        await personaEngineService.endSessionWithPersonaTracking(undefined, state.currentSession.gameId)
+        
+        // Update local playtime (fallback if backend sync fails)
+        const durationMs = Date.now() - state.currentSession.startedAt
+        const minutes = Math.floor(durationMs / 60000)
+
+        set(prev => ({
+          games: prev.games.map(g =>
+            g.id === prev.currentSession?.gameId
+              ? {
+                  ...g,
+                  hoursPlayed: (g.hoursPlayed || 0) + minutes / 60,
+                  lastPlayed: new Date()
+                }
+              : g
+          ),
+          currentSession: null
+        }))
+      } catch (error) {
+        console.error('Failed to end session with persona tracking:', error)
+        
+        // Fallback to basic launcher service
+        try {
+          await launcherService.endSession(undefined, state.currentSession.gameId)
+          
+          const durationMs = Date.now() - state.currentSession.startedAt
+          const minutes = Math.floor(durationMs / 60000)
+
+          set(prev => ({
+            games: prev.games.map(g =>
+              g.id === prev.currentSession?.gameId
+                ? {
+                    ...g,
+                    hoursPlayed: (g.hoursPlayed || 0) + minutes / 60,
+                    lastPlayed: new Date()
+                  }
+                : g
+            ),
+            currentSession: null
+          }))
+        } catch (fallbackError) {
+          console.error('Fallback session end also failed:', fallbackError)
+          
+          // Last resort: just clear the session locally
+          set({ currentSession: null })
+        }
+      }
+    },
+
+    setFilter: (filter: keyof LibraryStore['filters'], value: any) => {
+      set(state => ({
+        filters: { ...state.filters, [filter]: value }
+      }))
+    },
+
+    clearFilters: () => {
+      set({
+        filters: {
+          genre: null,
+          platform: null,
+          status: null,
+          search: ''
+        }
+      })
+    },
+
+    setGames: (games: Game[]) => set({ 
+      games, 
+      hasLoaded: true 
+    }),
+
+    updateGameStatus: (gameId: string, status: string) => {
+      set(state => ({
+        games: state.games.map(g =>
+          g.id === gameId ? { ...g, playStatus: status as any } : g
+        )
+      }))
+    },
+
+    updateGamePlaytime: (gameId: string, playtime: number) => {
+      set(state => ({
+        games: state.games.map(g =>
+          g.id === gameId ? { ...g, hoursPlayed: playtime } : g
+        )
+      }))
+    },
+
+    setHasLoaded: (hasLoaded: boolean) => set({ hasLoaded }),
+
+    loadGames: async () => {
+      // Prevent multiple loads
+      if (get().hasLoaded) {
+        console.log('🎮 Library already loaded, skipping...')
+        return
+      }
+
+      try {
+        get().setIsLoading(true)
+        
+        // Load games for authenticated user
+        const response = await gameApiService.getUserGames()
+        
+        if (response.success && response.data) {
+          get().actions.setGames(response.data.games)
+          console.log('🎮 Loaded user games:', response.data.games.length)
+        } else {
+          console.error('Failed to load user games:', response.error)
+          get().actions.setGames([])
+        }
+        
+        get().setHasLoaded(true)
+      } catch (error) {
+        console.error('Failed to load games:', error)
+        get().actions.setGames([])
+        get().setHasLoaded(true)
+      } finally {
+        get().setIsLoading(false)
+      }
+    }
+    }
+  },
+
+  setIntelligenceState: (partial: Partial<LibraryStore['intelligence']>) => {
+    set(state => ({
+      intelligence: { ...state.intelligence, ...partial }
+    }))
+  }
+})
+
+// ------------------------------------------------------------
+// Utility Functions (outside the store)
+// ------------------------------------------------------------
+
+export const filterByGenre = (games: Game[], genre: string): Game[] =>
+  games.filter(game =>
+    game.genres.some(g => g.name.toLowerCase() === genre.toLowerCase())
+  )
+
+export const filterByPlatform = (games: Game[], platform: string): Game[] =>
+  games.filter(game =>
+    game.platforms.some(p => p.name.toLowerCase() === platform.toLowerCase())
+  )
+
+export const filterByStatus = (games: Game[], status: string): Game[] =>
+  games.filter(game => game.playStatus === status)
+
+export const searchGames = (games: Game[], query: string): Game[] => {
+  const q = query.toLowerCase()
+  return games.filter(
+    game =>
+      game.title.toLowerCase().includes(q) ||
+      game.description?.toLowerCase().includes(q) ||
+      game.tags?.some(tag => tag.toLowerCase().includes(q))
+  )
+}
