@@ -1,0 +1,23 @@
+# Ignore backend dependencies that cause build issues on Vercel
+apps/api/
+packages/*/src/
+packages/*/dist/
+packages/*/build/
+packages/*/node_modules/
+
+# Ignore SQLite and native dependencies that don't work on Vercel
+**/better-sqlite3/
+**/sqlite3/
+**/node-gyp/
+**/*.node
+
+# Ignore development files
+**/*.log
+**/.DS_Store
+**/coverage/
+**/.nyc_output/
+
+# Keep only frontend-related files
+!apps/web/**/*
+!packages/ui/**/*
+!packages/types/**/*
