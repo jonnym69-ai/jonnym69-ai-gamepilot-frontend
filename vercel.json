@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "cd apps/web && mv package.standalone.json package.json && npm install && npm run build",
-  "outputDirectory": "apps/web/dist",
-  "installCommand": "cd apps/web && mv package.standalone.json package.json && npm install",
-  "devCommand": "cd apps/web && npm run dev",
+  "rootDirectory": "apps/web",
+  "buildCommand": "mv package.standalone.json package.json && npm install && npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "mv package.standalone.json package.json && npm install",
+  "devCommand": "npm run dev",
   "env": {
     "VITE_SUPABASE_URL": "@supabase_url",
     "VITE_SUPABASE_ANON_KEY": "@supabase_anon_key",
